@@ -3,19 +3,22 @@ SetCompressor /SOLID /FINAL lzma
 
 !addplugindir "plugins"
 
-
 !include "MUI2.nsh"
 ;http://nsis.sourceforge.net/Docs/Modern%20UI%202/Readme.html
 ; Config for Modern Interface
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_TEXT "Thanks for installing this game"
-;!define MUI_WELCOMEFINISHPAGE_BITMAP "$EXEDIR\graphics\SideBanner.bmp"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 
 !define MUI_CUSTOMFUNCTION_GUIINIT guiInit
+!define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME
+!define MUI_FINISHPAGE_RUN_TEXT "Start game"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Readme file for game"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION showReadme
+
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_FUNCTION runExit
 
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
@@ -24,17 +27,20 @@ SetCompressor /SOLID /FINAL lzma
 
 !include "LogicLib.nsh"
 
-
-
-
 Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
+Name $GAMENAME
+
 VAR /GLOBAL README
 VAR /GLOBAL MIRROR_COUNT
 VAR /GLOBAL MIRROR
 VAR /GLOBAL FILENAME
+VAR /GLOBAL VERSION
 VAR /GLOBAL MD5
 VAR /GLOBAL FILES
+VAR /GLOBAL GAMENAME
+VAR /GLOBAL INSTALLERNAME
+VAR /GLOBAL PARAMETER
 
 !define SPRING_INI "springinstaller.ini"
 
@@ -80,25 +86,39 @@ dlok:
 
 FunctionEnd
 
-; called on installation end
+; called on installation end (when selected)
 Function showReadme
 	ExecShell "open" $README
 FunctionEnd
 
-Function guiInit
-;	SetBrandingImage "$EXEDIR\graphics\SideBanner.bmp"
-;	!insertmacro MUI2_HEADERIMAGE_BITMAP  "$EXEDIR\graphics\SideBanner.bmp" ""
+; run on exit (when selected)
+Function runExit
+	Exec '"$INSTDIR\spring.exe" $PARAMETER'
+	MessageBox MB_OK '"$INSTDIR\spring.exe" $PARAMETER'
+FunctionEnd
+
+Function .onInit
+	;initialize global vars
+	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
+
+	IfFileExists "$EXEDIR\$INSTALLERNAME.ini" configok
+	MessageBox MB_OK "Couldn't read $EXEDIR\$INSTALLERNAME.ini"
+	Abort
+configok:
+	ReadINIStr $FILES "$EXEDIR\$INSTALLERNAME.ini" "Spring" "files" ; count of files
+	ReadINIStr $README "$EXEDIR\$INSTALLERNAME.ini" "Spring" "readme" ; url to readme
+	ReadINIStr $GAMENAME "$EXEDIR\$INSTALLERNAME.ini" "Spring" "gamename" ; name of game
+	ReadINIStr $VERSION "$EXEDIR\$INSTALLERNAME.ini" "Spring" "version" ; version of engine
+	ReadINIStr $PARAMETER "$EXEDIR\$INSTALLERNAME.ini" "Spring" "parameter" ; version of engine
 FunctionEnd
 
 Section "Install"
+
 	Push "Spring"
 	Call fetchFile
 ;	ExecWait '"$EXEDIR\$FILENAME" /S /D=$INSTDIR'
 	DetailPrint 'ExecWait "$EXEDIR\$FILENAME" /S /D=$INSTDIR'
 
-; get count of files
-	ReadINIStr $FILES "$EXEDIR\springinstaller.ini" "Spring" "files"
-	ReadINIStr $README "$EXEDIR\springinstaller.ini" "Spring" "helpurl"
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
 	${While} $0 <= $FILES
@@ -107,6 +127,8 @@ Section "Install"
 		Call fetchFile
 		IntOp $0 $0 + 1
 	${EndWhile}
-
+	CreateDirectory "$SMPROGRAMS\$GAMENAME"
+	createShortCut "$SMPROGRAMS\$GAMENAME\Readme - $GAMENAME.lnk" "$README"
+	createShortCut "$SMPROGRAMS\$GAMENAME\$GAMENAME.lnk" "$INSTDIR\spring.exe" $PARAMETER
 SectionEnd
 
