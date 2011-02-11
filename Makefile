@@ -1,0 +1,3 @@
+
+all:
+	makensis springinstaller.nsi
