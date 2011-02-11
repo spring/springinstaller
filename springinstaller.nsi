@@ -31,18 +31,22 @@ Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
 Name $GAMENAME
 
-VAR /GLOBAL README
-VAR /GLOBAL MIRROR_COUNT
-VAR /GLOBAL MIRROR
-VAR /GLOBAL FILENAME
-VAR /GLOBAL VERSION
-VAR /GLOBAL MD5
-VAR /GLOBAL FILES
-VAR /GLOBAL GAMENAME
-VAR /GLOBAL INSTALLERNAME
-VAR /GLOBAL PARAMETER
+VAR /GLOBAL SPRING_INI ; name of ini file
+VAR /GLOBAL README ; http url to readme
+VAR /GLOBAL VERSION ; version of spring engine
+VAR /GLOBAL FILES ; count of files to install
+VAR /GLOBAL GAMENAME ; name of the game, is used as filename!
+VAR /GLOBAL INSTALLERNAME ; name of installer.exe without .exe
+VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
+VAR /GLOBAL SOURCEDIR
 
-!define SPRING_INI "springinstaller.ini"
+; temp vars
+VAR /GLOBAL MIRROR_COUNT ; count of mirrors of current file
+VAR /GLOBAL MD5 ; md5 of current file
+VAR /GLOBAL DIRECTORY ; subdirectory where current file to install to
+VAR /GLOBAL MIRROR ; current mirror
+VAR /GLOBAL FILENAME ; filename of current file
+
 
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
@@ -50,18 +54,19 @@ Function fetchFile
 	Push $0
 	Exch
 	Pop $0
-
-	ReadINIStr $MIRROR_COUNT "$EXEDIR\springinstaller.ini" $0 "mirror_count"
-	ReadINIStr $MIRROR "$EXEDIR\springinstaller.ini" $0 "mirror1"
+	DetailPrint "Section $0"
+	ReadINIStr $MIRROR_COUNT $SPRING_INI $0 "mirror_count"
+	ReadINIStr $MIRROR $SPRING_INI $0 "mirror1"
 ;TODO: retry with mirrors
-;	ReadINIStr $MIRROR "springinstaller.ini" "Spring" "mirror2"
-;	ReadINIStr $MIRROR "springinstaller.ini" "Spring" "mirror3"
-	ReadINIStr $FILENAME "$EXEDIR\springinstaller.ini" $0 "filename"
-	ReadINIStr $MD5 "$EXEDIR\springinstaller.ini" $0 "md5"
+;	ReadINIStr $MIRROR $SPRING_INI "Spring" "mirror2"
+;	ReadINIStr $MIRROR $SPRING_INI "Spring" "mirror3"
+	ReadINIStr $FILENAME $SPRING_INI $0 "filename"
+	ReadINIStr $MD5 $SPRING_INI $0 "md5"
+	ReadINIStr $DIRECTORY $SPRING_INI $0 "directory"
 
 	IfFileExists $FILENAME md5check
-	DetailPrint "Downloading $MIRROR"
-	inetc::get $MIRROR "$EXEDIR\$FILENAME"
+	DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
+	inetc::get $MIRROR "$SOURCEDIR\$FILENAME"
 	Pop $0
 	StrCmp $0 "OK" dlok
 abort:
@@ -71,12 +76,17 @@ abort:
 md5check:
 	IfFileExists $FILENAME +1 abort
 
-	DetailPrint "$EXEDIR\$FILENAME :"
-	md5dll::GetMD5File "$EXEDIR\$FILENAME"
+	DetailPrint "$SOURCEDIR\$FILENAME :"
+	md5dll::GetMD5File "$SOURCEDIR\$FILENAME"
 	Pop $0
 	${If} $0 == $MD5
 		DetailPrint "md5 match:[$0]"
-		;TODO: install file here
+		${If} $DIRECTORY != ""
+			CreateDirectory "$INSTDIR\$DIRECTORY"
+			CopyFiles /FILESONLY "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
+		${Else}
+			DetailPrint "$FILENAME has no 'directory' set in config, not copying"
+		${EndIf}
 	${Else}
 		DetailPrint "md5 mismatch:[$0]"
 		;TODO: prompt for redownload?
@@ -100,16 +110,17 @@ FunctionEnd
 Function .onInit
 	;initialize global vars
 	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
-
-	IfFileExists "$EXEDIR\$INSTALLERNAME.ini" configok
-	MessageBox MB_OK "Couldn't read $EXEDIR\$INSTALLERNAME.ini"
+	StrCpy $SOURCEDIR $EXEDIR
+	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
+	IfFileExists $SPRING_INI configok
+	MessageBox MB_OK "Couldn't read $SPRING_INI"
 	Abort
 configok:
-	ReadINIStr $FILES "$EXEDIR\$INSTALLERNAME.ini" "Spring" "files" ; count of files
-	ReadINIStr $README "$EXEDIR\$INSTALLERNAME.ini" "Spring" "readme" ; url to readme
-	ReadINIStr $GAMENAME "$EXEDIR\$INSTALLERNAME.ini" "Spring" "gamename" ; name of game
-	ReadINIStr $VERSION "$EXEDIR\$INSTALLERNAME.ini" "Spring" "version" ; version of engine
-	ReadINIStr $PARAMETER "$EXEDIR\$INSTALLERNAME.ini" "Spring" "parameter" ; version of engine
+	ReadINIStr $FILES $SPRING_INI "Spring" "files" ; count of files
+	ReadINIStr $README $SPRING_INI "Spring" "readme" ; url to readme
+	ReadINIStr $GAMENAME $SPRING_INI "Spring" "gamename" ; name of game
+	ReadINIStr $VERSION $SPRING_INI "Spring" "version" ; version of engine
+	ReadINIStr $PARAMETER "$SPRING_INI" "Spring" "parameter" ; version of engine
 FunctionEnd
 
 Section "Install"
@@ -123,7 +134,6 @@ Section "Install"
 	StrCpy $0 1
 	${While} $0 <= $FILES
 		Push "file$0"
-		DetailPrint $0
 		Call fetchFile
 		IntOp $0 $0 + 1
 	${EndWhile}
