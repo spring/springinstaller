@@ -199,7 +199,7 @@ Function .onInit
 	StrCpy $SOURCEDIR $EXEDIR
 	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
 
-	${IfNot} ${FileExists} $SPRING_INI
+	${IfNot} ${FileExists} $SPRING_INI ; ini doesn't exist, download it
 		Push "SPRING:"
 		Call ReadCustomerData
 		Pop $0
@@ -207,6 +207,7 @@ Function .onInit
 			inetc::get $0 $SPRING_INI
 			Pop $1
 			${If} $1 != "ok"
+				MessageBox MB_OK "Downloading $0 failed."
 				Abort
 			${EndIf}
 		${EndIf}
@@ -224,7 +225,7 @@ Function .onInit
 	!insertmacro initSection ${SEC_9} "description9"
 
 	IfFileExists $SPRING_INI configok
-	MessageBox MB_OK "Couldn't read $SPRING_INI"
+	MessageBox MB_OK "Couldn't open $SPRING_INI"
 	Abort
 configok:
 	ReadINIStr $FILES $SPRING_INI "Spring" "files" ; count of files
