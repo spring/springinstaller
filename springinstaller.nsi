@@ -49,6 +49,7 @@ VAR /GLOBAL MIRROR ; current mirror
 VAR /GLOBAL FILENAME ; filename of current file
 VAR /GLOBAL EXEC ; to execute after file is downladed, %SOURCEDIR% and %INSTALLDIR% are replaced
 VAR /GLOBAL EXEC_PARAMS ; params for execute, %SOURCEDIR% and %INSTALLDIR% are replaced
+VAR /GLOBAL 7ZIP_EXTRACT_PATH ; extract file to path
 
 
 ; downloads a file, uses + _modifies_ global vars
@@ -68,19 +69,20 @@ Function fetchFile
 	ReadINIStr $DIRECTORY $SPRING_INI $0 "directory"
 	ReadINIStr $EXEC $SPRING_INI $0 "exec"
 	ReadINIStr $EXEC_PARAMS $SPRING_INI $0 "exec_params"
+	ReadINIStr $7ZIP_EXTRACT_PATH $SPRING_INI $0 "7zip"
 
-	IfFileExists $FILENAME md5check
+	IfFileExists $FILENAME md5check ; skip download if file is already there
 	DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
 	inetc::get $MIRROR "$SOURCEDIR\$FILENAME"
 	Pop $0
-	StrCmp $0 "OK" dlok
-abort:
-	Abort
-;	MessageBox MB_OK|MB_ICONEXCLAMATION "http download Error, click OK to abort installation $0" /SD IDOK
+	${If} $0 != "OK"
+		Abort
+	${EndIf}
 
-md5check:
-	IfFileExists $FILENAME +1 abort
-
+	${IfNot} ${FileExists} $FILENAME
+		Abort
+	${EndIf}
+	md5check:
 	DetailPrint "$SOURCEDIR\$FILENAME :"
 	md5dll::GetMD5File "$SOURCEDIR\$FILENAME"
 	Pop $0
@@ -97,8 +99,13 @@ md5check:
 		Abort
 		;TODO: prompt for redownload?
 	${EndIf}
-dlok:
-
+	; extract file if requested
+	${If} $7ZIP_EXTRACT_PATH != ""
+		SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
+		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
+		SetOutPath $INSTDIR
+	${EndIf}
+	; run program if requested
 	${If} $EXEC != ""
 		DetailPrint "exec before $EXEC $PARAMS"
 		!insertmacro ReplaceSubStr $EXEC "%SOURCEDIR%" $SOURCEDIR
@@ -109,7 +116,6 @@ dlok:
 		${EndIf}
 		DetailPrint "$EXEC $EXEC_PARAMS"
 		ExecWait '"$EXEC" $EXEC_PARAMS'
-		
 	${EndIf}
 
 	Pop $0

@@ -6,3 +6,6 @@ md5dll.dll
 License: Unknown
 http://nsis.sourceforge.net/MD5_plugin
 
+nsis7z
+License: LGPL
+http://nsis.sourceforge.net/Nsis7z_plug-in
