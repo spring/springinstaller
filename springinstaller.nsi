@@ -27,6 +27,8 @@ SetCompressor /SOLID /FINAL lzma
 
 !include "LogicLib.nsh"
 !include "include/strrep.nsi"
+!include "include/StrLoc.nsi"
+!include "include/ReadCustomerData.nsi"
 
 Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
@@ -196,6 +198,20 @@ Function .onInit
 	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
 	StrCpy $SOURCEDIR $EXEDIR
 	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
+
+	${IfNot} ${FileExists} $SPRING_INI
+		Push "SPRING:"
+		Call ReadCustomerData
+		Pop $0
+		${If} $0 != ""
+			inetc::get $0 $SPRING_INI
+			Pop $1
+			${If} $1 != "ok"
+				Abort
+			${EndIf}
+		${EndIf}
+	${EndIf}
+
 	!insertmacro initSection ${SEC_0} "description0"
 	!insertmacro initSection ${SEC_1} "description1"
 	!insertmacro initSection ${SEC_2} "description2"
