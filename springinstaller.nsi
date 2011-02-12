@@ -76,6 +76,7 @@ Section "" SEC_9
 SectionEnd
 
 
+
 VAR /GLOBAL DESC_SECTION_0
 VAR /GLOBAL DESC_SECTION_1
 VAR /GLOBAL DESC_SECTION_2
@@ -116,6 +117,15 @@ VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SECTION ; section for current file
 
+!macro escapeVar var
+	!insertmacro ReplaceSubStr ${var} "%GAMENAME%" $GAMENAME
+	!insertmacro ReplaceSubStr ${var} "%INSTALLERNAME%" $INSTALLERNAME
+	!insertmacro ReplaceSubStr ${var} "%SOURCEDIR%" $SOURCEDIR
+	!insertmacro ReplaceSubStr ${var} "%SPRING_INI%" $SPRING_INI
+	!insertmacro ReplaceSubStr ${var} "%INSTALLDIR%" $INSTDIR
+	!insertmacro ReplaceSubStr ${var} "%VERSION%" $VERSION
+!macroend
+
 
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
@@ -153,6 +163,8 @@ Function fetchFile
 	ReadINIStr $SHORTCUT_ICON $SPRING_INI $0 "shortcut_icon"
 	ReadINIStr $SHORTCUT_DIRECTORY $SPRING_INI $0 "shortcut_directory"
 
+	!insertmacro escapeVar $FILENAME
+	!insertmacro escapeVar $MIRROR
 
 	${If} $MIRROR_COUNT == ""
 		StrCpy $MIRROR_COUNT 1
@@ -212,22 +224,20 @@ Function fetchFile
 
 	; run program if requested
 	${If} $EXEC != ""
-		!insertmacro ReplaceSubStr $EXEC "%SOURCEDIR%" $SOURCEDIR
-		!insertmacro ReplaceSubStr $EXEC "%INSTALLDIR%" $INSTDIR
+		!insertmacro escapeVar $EXEC
 		${If} $EXEC_PARAMS != ""
-			!insertmacro ReplaceSubStr $EXEC_PARAMS "%SOURCEDIR%" $SOURCEDIR
-			!insertmacro ReplaceSubStr $EXEC_PARAMS "%INSTALLDIR%" $INSTDIR
+			!insertmacro escapeVar $EXEC_PARAMS
 		${EndIf}
 		DetailPrint "$EXEC $EXEC_PARAMS"
 		ExecWait '"$EXEC" $EXEC_PARAMS'
 	${EndIf}
 
 	${If} $SHORTCUT != ""
-		!insertmacro ReplaceSubStr $SHORTCUT "%GAMENAME%" $GAMENAME
-		!insertmacro ReplaceSubStr $SHORTCUT_TARGET "%INSTALLDIR%" $INSTDIR
-		!insertmacro ReplaceSubStr $SHORTCUT_PARAMETER "%INSTALLDIR%" $INSTDIR
-		!insertmacro ReplaceSubStr $SHORTCUT_ICON "%INSTALLDIR%" $INSTDIR
-		!insertmacro ReplaceSubStr $SHORTCUT_DIRECTORY "%GAMENAME%" $GAMENAME
+		!insertmacro escapeVar $SHORTCUT
+		!insertmacro escapeVar $SHORTCUT_TARGET
+		!insertmacro escapeVar $SHORTCUT_PARAMETER
+		!insertmacro escapeVar $SHORTCUT_ICON
+		!insertmacro escapeVar $SHORTCUT_DIRECTORY
 		${If} $SHORTCUT_DIRECTORY == ""
 			StrCpy $SHORTCUT_DIRECTORY $GAMENAME
 		${EndIf}
@@ -346,7 +356,7 @@ Function .onInit
 	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
 	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
 	ReadINIStr $SIZE "$SPRING_INI" ${SPRING_MAIN_SECTION} "size" ; size of all installed files
-	!insertmacro ReplaceSubStr $EXEC_EXIT "%INSTALLDIR%" $INSTDIR
+	!insertmacro escapeVar $EXEC_EXIT
 
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
