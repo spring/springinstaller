@@ -52,7 +52,11 @@ VAR /GLOBAL FILENAME ; filename of current file
 VAR /GLOBAL EXEC ; to execute after file is downladed, %SOURCEDIR% and %INSTALLDIR% are replaced
 VAR /GLOBAL EXEC_PARAMS ; params for execute, %SOURCEDIR% and %INSTALLDIR% are replaced
 VAR /GLOBAL 7ZIP_EXTRACT_PATH ; extract file to path
-
+VAR /GLOBAL SHORTCUT ; name of shortcut to create in starmenu, %GAMENAME% is replaced
+VAR /GLOBAL SHORTCUT_TARGET ; target of shortcut, %INSTALLDIR% is replaced
+VAR /GLOBAL SHORTCUT_PARAMETER ; parameter, %INSTALLDIR% is replaced
+VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
+VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
 
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
@@ -73,43 +77,65 @@ Function fetchFile
 	ReadINIStr $EXEC_PARAMS $SPRING_INI $0 "exec_params"
 	ReadINIStr $7ZIP_EXTRACT_PATH $SPRING_INI $0 "7zip"
 
-	IfFileExists $FILENAME md5check ; skip download if file is already there
-	DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
-	inetc::get $MIRROR "$SOURCEDIR\$FILENAME"
-	Pop $0
-	${If} $0 != "OK"
-		Abort
+	ReadINIStr $SHORTCUT $SPRING_INI $0 "shortcut"
+	ReadINIStr $SHORTCUT_TARGET $SPRING_INI $0 "shortcut_target"
+	ReadINIStr $SHORTCUT_PARAMETER $SPRING_INI $0 "shortcut_parameter"
+	ReadINIStr $SHORTCUT_ICON $SPRING_INI $0 "shortcut_icon"
+	ReadINIStr $SHORTCUT_DIRECTORY $SPRING_INI $0 "shortcut_directory"
+
+
+	${If} $MIRROR_COUNT == ""
+		StrCpy $MIRROR_COUNT 1
 	${EndIf}
 
-	${IfNot} ${FileExists} $FILENAME
-		Abort
-	${EndIf}
-	md5check:
-	DetailPrint "$SOURCEDIR\$FILENAME :"
-	md5dll::GetMD5File "$SOURCEDIR\$FILENAME"
-	Pop $0
-	${If} $0 == $MD5
-		DetailPrint "md5 match:[$0]"
-		${If} $DIRECTORY != ""
-			CreateDirectory "$INSTDIR\$DIRECTORY"
-			CopyFiles /FILESONLY "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
-		${Else}
-			DetailPrint "$FILENAME has no 'directory' set in config, not copying"
+	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"  ; skip download if file is already there
+		DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
+		inetc::get $MIRROR "$SOURCEDIR\$FILENAME"
+		Pop $0
+		${If} $0 != "OK"
+			DetailPrint "Download failed"
+			Abort
 		${EndIf}
-	${Else}
-		DetailPrint "md5 mismatch:[$0]"
-		Abort
-		;TODO: prompt for redownload?
+
+		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"
+			DetailPrint "$SOURCEDIR\$FILENAME didn't exist after download"
+			Abort
+		${EndIf}
+	${EndIf}
+
+	${If} "$MD5" != "" ; only check md5 is set in .ini
+		DetailPrint "$SOURCEDIR\$FILENAME :"
+		md5dll::GetMD5File "$SOURCEDIR\$FILENAME"
+		Pop $0
+		${If} $0 == $MD5
+			DetailPrint "md5 match:[$0]"
+			${If} $DIRECTORY != ""
+				CreateDirectory "$INSTDIR\$DIRECTORY"
+				CopyFiles /FILESONLY "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
+			${Else}
+				DetailPrint "$FILENAME has no 'directory' set in config, not copying"
+			${EndIf}
+		${Else}
+			DetailPrint "md5 mismatch:[$0]"
+			DetailPrint "expected:    [$MD5]"
+			Abort
+			;TODO: prompt for redownload?
+		${EndIf}
 	${EndIf}
 	; extract file if requested
 	${If} $7ZIP_EXTRACT_PATH != ""
-		SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
+		${IfNot} $7ZIP_EXTRACT_PATH == "\"
+			SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
+		${EndIf}
+		DetailPrint "Extracting $FILENAME to $INSTDIR$7ZIP_EXTRACT_PATH"
+
 		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
-		SetOutPath $INSTDIR
+		${IfNot} $7ZIP_EXTRACT_PATH == "\"
+			SetOutPath $INSTDIR
+		${EndIf}
 	${EndIf}
 	; run program if requested
 	${If} $EXEC != ""
-		DetailPrint "exec before $EXEC $PARAMS"
 		!insertmacro ReplaceSubStr $EXEC "%SOURCEDIR%" $SOURCEDIR
 		!insertmacro ReplaceSubStr $EXEC "%INSTALLDIR%" $INSTDIR
 		${If} $EXEC_PARAMS != ""
@@ -120,6 +146,19 @@ Function fetchFile
 		ExecWait '"$EXEC" $EXEC_PARAMS'
 	${EndIf}
 
+	${If} $SHORTCUT != ""
+		!insertmacro ReplaceSubStr $SHORTCUT "%GAMENAME%" $GAMENAME
+		!insertmacro ReplaceSubStr $SHORTCUT_TARGET "%INSTALLDIR%" $INSTDIR
+		!insertmacro ReplaceSubStr $SHORTCUT_PARAMETER "%INSTALLDIR%" $INSTDIR
+		!insertmacro ReplaceSubStr $SHORTCUT_ICON "%INSTALLDIR%" $INSTDIR
+		!insertmacro ReplaceSubStr $SHORTCUT_DIRECTORY "%GAMENAME%" $GAMENAME
+		${If} $SHORTCUT_DIRECTORY == ""
+			StrCpy $SHORTCUT_DIRECTORY $GAMENAME
+		${EndIf}
+		CreateDirectory "$SMPROGRAMS\$SHORTCUT_DIRECTORY"
+		CreateShortCut "$SMPROGRAMS\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
+
+	${EndIf}
 	Pop $0
 
 FunctionEnd
