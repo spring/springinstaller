@@ -135,6 +135,11 @@ Function fetchFile
 	${If} $ZIP_EXTRACT_PATH != ""
 		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
 		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
+		Pop $0
+		${If} $0 != "success"
+			DetailPrint "Unzipping error"
+			Abort
+		${EndIf}
 	${EndIf}
 
 	; run program if requested
