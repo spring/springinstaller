@@ -52,6 +52,7 @@ VAR /GLOBAL FILENAME ; filename of current file
 VAR /GLOBAL EXEC ; to execute after file is downladed, %SOURCEDIR% and %INSTALLDIR% are replaced
 VAR /GLOBAL EXEC_PARAMS ; params for execute, %SOURCEDIR% and %INSTALLDIR% are replaced
 VAR /GLOBAL 7ZIP_EXTRACT_PATH ; extract file to path
+VAR /GLOBAL ZIP_EXTRACT_PATH ; extract zip file to this path
 VAR /GLOBAL SHORTCUT ; name of shortcut to create in starmenu, %GAMENAME% is replaced
 VAR /GLOBAL SHORTCUT_TARGET ; target of shortcut, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_PARAMETER ; parameter, %INSTALLDIR% is replaced
@@ -75,7 +76,8 @@ Function fetchFile
 	ReadINIStr $DIRECTORY $SPRING_INI $0 "directory"
 	ReadINIStr $EXEC $SPRING_INI $0 "exec"
 	ReadINIStr $EXEC_PARAMS $SPRING_INI $0 "exec_params"
-	ReadINIStr $7ZIP_EXTRACT_PATH $SPRING_INI $0 "7zip"
+	ReadINIStr $7ZIP_EXTRACT_PATH $SPRING_INI $0 "un7zip"
+	ReadINIStr $ZIP_EXTRACT_PATH $SPRING_INI $0 "unzip"
 
 	ReadINIStr $SHORTCUT $SPRING_INI $0 "shortcut"
 	ReadINIStr $SHORTCUT_TARGET $SPRING_INI $0 "shortcut_target"
@@ -129,6 +131,12 @@ Function fetchFile
 		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
 		SetOutPath $INSTDIR
 	${EndIf}
+
+	${If} $ZIP_EXTRACT_PATH != ""
+		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
+		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
+	${EndIf}
+
 	; run program if requested
 	${If} $EXEC != ""
 		!insertmacro ReplaceSubStr $EXEC "%SOURCEDIR%" $SOURCEDIR
