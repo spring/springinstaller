@@ -1,6 +1,6 @@
 
 springinstaller.exe: springinstaller.nsi plugins/*.dll
-	makensis springinstaller.nsi
+	makensis -V3 springinstaller.nsi
 
 test: springinstaller.exe
 	cp springinstaller.exe test.exe

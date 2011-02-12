@@ -8,23 +8,32 @@ SetCompressor /SOLID /FINAL lzma
 ; Config for Modern Interface
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_TEXT "Thanks for installing this game"
-!define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 
-!define MUI_CUSTOMFUNCTION_GUIINIT guiInit
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME
 !define MUI_FINISHPAGE_RUN_TEXT "Start game"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Readme file for game"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION showReadme
+!define MUI_FINISHPAGE_RUN ""
 !define MUI_FINISHPAGE_RUN_FUNCTION runExit
+
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\nsis.bmp" ; optional
+
+!define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
+;!define MUI_WELCOMEPAGE_TITLE "Hey"
+;!define MUI_WELCOMEPAGE_TITLE_3LINES ""
+;!define MUI_WELCOMEPAGE_TEXT "blabla"
 
 !define SPRING_MAIN_SECTION "Spring"
 
-
+!insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_LANGUAGE "English"
 
 !include "LogicLib.nsh"
 !include "include/strrep.nsi"
@@ -181,29 +190,20 @@ FunctionEnd
 
 ; run on exit (when selected)
 Function runExit
+	MessageBox MB_OK "$EXEC_EXIT"
 	${If} $EXEC_EXIT != ""
 		Exec $EXEC_EXIT
 	${EndIf}
 FunctionEnd
 
-Section "Install Engine"
-
-;	Push "Engine"
-;	Call fetchFile
-;	ExecWait '"$EXEDIR\$FILENAME" /S /D=$INSTDIR'
-;	DetailPrint 'ExecWait "$EXEDIR\$FILENAME" /S /D=$INSTDIR'
-
+Section "Install remote files"
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
-
 	${While} $0 <= $FILES
 		Push "file$0"
 		Call fetchFile
 		IntOp $0 $0 + 1
 	${EndWhile}
-	CreateDirectory "$SMPROGRAMS\$GAMENAME"
-	createShortCut "$SMPROGRAMS\$GAMENAME\Readme - $GAMENAME.lnk" "$README"
-	createShortCut "$SMPROGRAMS\$GAMENAME\$GAMENAME.lnk" "$INSTDIR\spring.exe" $PARAMETER
 SectionEnd
 
 Section "Keep downloaded files" SEC_KEEPFILES
@@ -302,6 +302,6 @@ Function .onInit
 	ReadINIStr $VERSION $SPRING_INI ${SPRING_MAIN_SECTION} "version" ; version of engine
 	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
 	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
-	!insertmacro ReplaceSubStr $SHORTCUT_ICON "%INSTALLDIR%" $EXEC_EXIT
+	!insertmacro ReplaceSubStr $EXEC_EXIT "%INSTALLDIR%" $INSTDIR
 FunctionEnd
 

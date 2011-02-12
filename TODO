@@ -1,5 +1,6 @@
 
  * add uninstaller: log each file is written into install.log and use this file for uninstall
+ * add custom image
  * make use of mirror links when download fails
  * redownload file if md5 is wrong
  * unattended installer
