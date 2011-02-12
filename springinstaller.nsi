@@ -85,6 +85,7 @@ VAR /GLOBAL INSTALLERNAME ; name of installer.exe without .exe
 VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
 VAR /GLOBAL SOURCEDIR
 VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
+VAR /GLOBAL SIZE ; size of installed files
 
 ; temp vars
 VAR /GLOBAL MIRROR_COUNT ; count of mirrors of current file
@@ -234,13 +235,12 @@ FunctionEnd
 
 ; run on exit (when selected)
 Function runExit
-	MessageBox MB_OK "$EXEC_EXIT"
 	${If} $EXEC_EXIT != ""
 		Exec $EXEC_EXIT
 	${EndIf}
 FunctionEnd
 
-Section "-Install remote files"
+Section "-Install" SEC_INSTALL
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
 	${While} $0 <= $FILES
@@ -249,11 +249,6 @@ Section "-Install remote files"
 		IntOp $0 $0 + 1
 	${EndWhile}
 SectionEnd
-
-!macro initSection section text
-	ReadINIStr $0 $SPRING_INI "Spring" ${text}
-	SectionSetText ${section} $0
-!macroend
 
 Function .onInit
 	;initialize global vars
@@ -295,16 +290,25 @@ Function .onInit
 		Abort
 	${EndIf}
 
-	!insertmacro initSection ${SEC_0} "description0"
-	!insertmacro initSection ${SEC_1} "description1"
-	!insertmacro initSection ${SEC_2} "description2"
-	!insertmacro initSection ${SEC_3} "description3"
-	!insertmacro initSection ${SEC_4} "description4"
-	!insertmacro initSection ${SEC_5} "description5"
-	!insertmacro initSection ${SEC_6} "description6"
-	!insertmacro initSection ${SEC_7} "description7"
-	!insertmacro initSection ${SEC_8} "description8"
-	!insertmacro initSection ${SEC_9} "description9"
+	StrCpy $0 0
+	${While} $0 < 10
+		; $0=counter
+		; $1=option in .ini
+		; $2=SEC_ID
+		; $3=section flags
+		StrCpy $1 "section$0"
+		IntOp $2 ${SEC_0} + $0
+		ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} $1
+		SectionSetText $2 $R0
+		StrCpy $1 "section$0_force"
+		ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} $1
+		${If} $R0 == "yes"
+	                SectionGetFlags $2 $3 ; get current flags
+	                IntOp $3 $3 | ${SF_RO}
+			SectionSetFlags $2 $3
+		${EndIf}
+		IntOp $0 $0 + 1
+	${EndWhile}
 
 	ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
 	ReadINIStr $README $SPRING_INI ${SPRING_MAIN_SECTION} "readme" ; url to readme
@@ -312,6 +316,9 @@ Function .onInit
 	ReadINIStr $VERSION $SPRING_INI ${SPRING_MAIN_SECTION} "version" ; version of engine
 	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
 	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
+	ReadINIStr $SIZE "$SPRING_INI" ${SPRING_MAIN_SECTION} "size" ; size of all installed files
 	!insertmacro ReplaceSubStr $EXEC_EXIT "%INSTALLDIR%" $INSTDIR
+
+;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
 
