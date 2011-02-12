@@ -16,9 +16,10 @@ SetCompressor /SOLID /FINAL lzma
 !define MUI_FINISHPAGE_RUN_TEXT "Start game"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Readme file for game"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION showReadme
-
-!define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION runExit
+
+!define SPRING_MAIN_SECTION "Spring"
+
 
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
@@ -42,6 +43,7 @@ VAR /GLOBAL GAMENAME ; name of the game, is used as filename!
 VAR /GLOBAL INSTALLERNAME ; name of installer.exe without .exe
 VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
 VAR /GLOBAL SOURCEDIR
+VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
 
 ; temp vars
 VAR /GLOBAL MIRROR_COUNT ; count of mirrors of current file
@@ -58,6 +60,7 @@ VAR /GLOBAL SHORTCUT_TARGET ; target of shortcut, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_PARAMETER ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
+
 
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
@@ -92,7 +95,7 @@ Function fetchFile
 
 	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"  ; skip download if file is already there
 		DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
-		inetc::get $MIRROR "$SOURCEDIR\$FILENAME"
+		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
 		Pop $0
 		${If} $0 != "OK"
 			DetailPrint "Download failed"
@@ -178,8 +181,9 @@ FunctionEnd
 
 ; run on exit (when selected)
 Function runExit
-	Exec '"$INSTDIR\spring.exe" $PARAMETER'
-	MessageBox MB_OK '"$INSTDIR\spring.exe" $PARAMETER'
+	${If} $EXEC_EXIT != ""
+		Exec $EXEC_EXIT
+	${EndIf}
 FunctionEnd
 
 Section "Install Engine"
@@ -191,6 +195,7 @@ Section "Install Engine"
 
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
+
 	${While} $0 <= $FILES
 		Push "file$0"
 		Call fetchFile
@@ -246,18 +251,38 @@ Function .onInit
 	StrCpy $SOURCEDIR "$EXEDIR\$INSTALLERNAME - files"
 	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
 	CreateDirectory $SOURCEDIR
-	${IfNot} ${FileExists} $SPRING_INI ; ini doesn't exist, download it
+
+	${If} ${FileExists} $SPRING_INI
+		ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} "alwaysupdate" ; count of files
+	${Else}
+		StrCpy $R0 "yes" ; download file
+	${EndIf}
+
+	${If} $R0 == "yes" ; ini doesn't exist, download it
 		Push "SPRING:"
 		Call ReadCustomerData
 		Pop $0
 		${If} $0 != ""
-			inetc::get $0 $SPRING_INI
+			inetc::get $0 $SPRING_INI /END
 			Pop $1
 			${If} $1 != "ok"
 				MessageBox MB_OK "Downloading $0 failed."
 				Abort
 			${EndIf}
+		${Else}
+			MessageBox MB_OK "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH"
 		${EndIf}
+	${EndIf}
+
+	${IfNot} ${FileExists} $SPRING_INI
+		MessageBox MB_OK "Couldn't open $SPRING_INI"
+		Abort
+	${EndIf}
+
+	ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} "fileformat" ; count of files
+	${If} $R0 != "0.1"
+		MessageBox MB_OK "Invalid file format for $SPRING_INI: $R0, please update this installer!"
+		Abort
 	${EndIf}
 
 	!insertmacro initSection ${SEC_0} "description0"
@@ -271,14 +296,12 @@ Function .onInit
 	!insertmacro initSection ${SEC_8} "description8"
 	!insertmacro initSection ${SEC_9} "description9"
 
-	IfFileExists $SPRING_INI configok
-	MessageBox MB_OK "Couldn't open $SPRING_INI"
-	Abort
-configok:
-	ReadINIStr $FILES $SPRING_INI "Spring" "files" ; count of files
-	ReadINIStr $README $SPRING_INI "Spring" "readme" ; url to readme
-	ReadINIStr $GAMENAME $SPRING_INI "Spring" "gamename" ; name of game
-	ReadINIStr $VERSION $SPRING_INI "Spring" "version" ; version of engine
-	ReadINIStr $PARAMETER "$SPRING_INI" "Spring" "parameter" ; version of engine
+	ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
+	ReadINIStr $README $SPRING_INI ${SPRING_MAIN_SECTION} "readme" ; url to readme
+	ReadINIStr $GAMENAME $SPRING_INI ${SPRING_MAIN_SECTION} "gamename" ; name of game
+	ReadINIStr $VERSION $SPRING_INI ${SPRING_MAIN_SECTION} "version" ; version of engine
+	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
+	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
+	!insertmacro ReplaceSubStr $SHORTCUT_ICON "%INSTALLDIR%" $EXEC_EXIT
 FunctionEnd
 
