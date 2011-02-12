@@ -26,6 +26,7 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_PAGE_FINISH
 
 !include "LogicLib.nsh"
+!include "include/strrep.nsi"
 
 Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
@@ -46,6 +47,8 @@ VAR /GLOBAL MD5 ; md5 of current file
 VAR /GLOBAL DIRECTORY ; subdirectory where current file to install to
 VAR /GLOBAL MIRROR ; current mirror
 VAR /GLOBAL FILENAME ; filename of current file
+VAR /GLOBAL EXEC ; to execute after file is downladed, %SOURCEDIR% and %INSTALLDIR% are replaced
+VAR /GLOBAL EXEC_PARAMS ; params for execute, %SOURCEDIR% and %INSTALLDIR% are replaced
 
 
 ; downloads a file, uses + _modifies_ global vars
@@ -63,6 +66,8 @@ Function fetchFile
 	ReadINIStr $FILENAME $SPRING_INI $0 "filename"
 	ReadINIStr $MD5 $SPRING_INI $0 "md5"
 	ReadINIStr $DIRECTORY $SPRING_INI $0 "directory"
+	ReadINIStr $EXEC $SPRING_INI $0 "exec"
+	ReadINIStr $EXEC_PARAMS $SPRING_INI $0 "exec_params"
 
 	IfFileExists $FILENAME md5check
 	DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
@@ -89,9 +94,24 @@ md5check:
 		${EndIf}
 	${Else}
 		DetailPrint "md5 mismatch:[$0]"
+		Abort
 		;TODO: prompt for redownload?
 	${EndIf}
 dlok:
+
+	${If} $EXEC != ""
+		DetailPrint "exec before $EXEC $PARAMS"
+		!insertmacro ReplaceSubStr $EXEC "%SOURCEDIR%" $SOURCEDIR
+		!insertmacro ReplaceSubStr $EXEC "%INSTALLDIR%" $INSTDIR
+		${If} $EXEC_PARAMS != ""
+			!insertmacro ReplaceSubStr $EXEC_PARAMS "%SOURCEDIR%" $SOURCEDIR
+			!insertmacro ReplaceSubStr $EXEC_PARAMS "%INSTALLDIR%" $INSTDIR
+		${EndIf}
+		DetailPrint "$EXEC $EXEC_PARAMS"
+		ExecWait '"$EXEC" $EXEC_PARAMS'
+		
+	${EndIf}
+
 	Pop $0
 
 FunctionEnd
@@ -107,28 +127,12 @@ Function runExit
 	MessageBox MB_OK '"$INSTDIR\spring.exe" $PARAMETER'
 FunctionEnd
 
-Function .onInit
-	;initialize global vars
-	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
-	StrCpy $SOURCEDIR $EXEDIR
-	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
-	IfFileExists $SPRING_INI configok
-	MessageBox MB_OK "Couldn't read $SPRING_INI"
-	Abort
-configok:
-	ReadINIStr $FILES $SPRING_INI "Spring" "files" ; count of files
-	ReadINIStr $README $SPRING_INI "Spring" "readme" ; url to readme
-	ReadINIStr $GAMENAME $SPRING_INI "Spring" "gamename" ; name of game
-	ReadINIStr $VERSION $SPRING_INI "Spring" "version" ; version of engine
-	ReadINIStr $PARAMETER "$SPRING_INI" "Spring" "parameter" ; version of engine
-FunctionEnd
+Section "Install Engine"
 
-Section "Install"
-
-	Push "Spring"
-	Call fetchFile
+;	Push "Engine"
+;	Call fetchFile
 ;	ExecWait '"$EXEDIR\$FILENAME" /S /D=$INSTDIR'
-	DetailPrint 'ExecWait "$EXEDIR\$FILENAME" /S /D=$INSTDIR'
+;	DetailPrint 'ExecWait "$EXEDIR\$FILENAME" /S /D=$INSTDIR'
 
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
@@ -141,4 +145,70 @@ Section "Install"
 	createShortCut "$SMPROGRAMS\$GAMENAME\Readme - $GAMENAME.lnk" "$README"
 	createShortCut "$SMPROGRAMS\$GAMENAME\$GAMENAME.lnk" "$INSTDIR\spring.exe" $PARAMETER
 SectionEnd
+
+Section "Keep downloaded files" SEC_KEEPFILES
+SectionEnd
+
+; hidden section to be reused for sections read from .ini
+Section "" SEC_0
+SectionEnd
+
+Section "" SEC_1
+SectionEnd
+
+Section "" SEC_2
+SectionEnd
+
+Section "" SEC_3
+SectionEnd
+
+Section "" SEC_4
+SectionEnd
+
+Section "" SEC_5
+SectionEnd
+
+Section "" SEC_6
+SectionEnd
+
+Section "" SEC_7
+SectionEnd
+
+Section "" SEC_8
+SectionEnd
+
+Section "" SEC_9
+SectionEnd
+
+!macro initSection section text
+	ReadINIStr $0 $SPRING_INI "Spring" ${text}
+	SectionSetText ${section} $0
+!macroend
+
+Function .onInit
+	;initialize global vars
+	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
+	StrCpy $SOURCEDIR $EXEDIR
+	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
+	!insertmacro initSection ${SEC_0} "description0"
+	!insertmacro initSection ${SEC_1} "description1"
+	!insertmacro initSection ${SEC_2} "description2"
+	!insertmacro initSection ${SEC_3} "description3"
+	!insertmacro initSection ${SEC_4} "description4"
+	!insertmacro initSection ${SEC_5} "description5"
+	!insertmacro initSection ${SEC_6} "description6"
+	!insertmacro initSection ${SEC_7} "description7"
+	!insertmacro initSection ${SEC_8} "description8"
+	!insertmacro initSection ${SEC_9} "description9"
+
+	IfFileExists $SPRING_INI configok
+	MessageBox MB_OK "Couldn't read $SPRING_INI"
+	Abort
+configok:
+	ReadINIStr $FILES $SPRING_INI "Spring" "files" ; count of files
+	ReadINIStr $README $SPRING_INI "Spring" "readme" ; url to readme
+	ReadINIStr $GAMENAME $SPRING_INI "Spring" "gamename" ; name of game
+	ReadINIStr $VERSION $SPRING_INI "Spring" "version" ; version of engine
+	ReadINIStr $PARAMETER "$SPRING_INI" "Spring" "parameter" ; version of engine
+FunctionEnd
 
