@@ -86,6 +86,7 @@ VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
 VAR /GLOBAL SOURCEDIR
 VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
 VAR /GLOBAL SIZE ; size of installed files
+VAR /GLOBAL UPDATEURL ; url of this file
 
 ; temp vars
 VAR /GLOBAL MIRROR_COUNT ; count of mirrors of current file
@@ -264,14 +265,18 @@ Function .onInit
 	${EndIf}
 
 	${If} $R0 == "yes" ; ini doesn't exist, download it
-		Push "SPRING:"
-		Call ReadCustomerData
-		Pop $0
-		${If} $0 != ""
-			inetc::get $0 $SPRING_INI /END
+		ReadINIStr $UPDATEURL $SPRING_INI ${SPRING_MAIN_SECTION} "updateurl" ; count of files
+		${If} $UPDATEURL == ""
+			Push "SPRING:"
+			Call ReadCustomerData
+			Pop $UPDATEURL
+		${EndIf}
+
+		${If} $UPDATEURL != ""
+			inetc::get $UPDATEURL $SPRING_INI /END
 			Pop $1
 			${If} $1 != "ok"
-				MessageBox MB_OK "Downloading $0 failed."
+				MessageBox MB_OK "Downloading $UPDATEURL failed."
 				Abort
 			${EndIf}
 		${Else}
