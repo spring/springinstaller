@@ -44,6 +44,38 @@ Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
 Name $GAMENAME
 
+; hidden section to be reused for sections read from .ini
+Section "" SEC_0
+SectionEnd
+
+Section "" SEC_1
+SectionEnd
+
+Section "" SEC_2
+SectionEnd
+
+Section "" SEC_3
+SectionEnd
+
+Section "" SEC_4
+SectionEnd
+
+Section "" SEC_5
+SectionEnd
+
+Section "" SEC_6
+SectionEnd
+
+Section "" SEC_7
+SectionEnd
+
+Section "" SEC_8
+SectionEnd
+
+Section "" SEC_9
+SectionEnd
+
+
 VAR /GLOBAL SPRING_INI ; name of ini file
 VAR /GLOBAL README ; http url to readme
 VAR /GLOBAL VERSION ; version of spring engine
@@ -69,6 +101,7 @@ VAR /GLOBAL SHORTCUT_TARGET ; target of shortcut, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_PARAMETER ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
+VAR /GLOBAL SECTION ; section for current file
 
 
 ; downloads a file, uses + _modifies_ global vars
@@ -78,6 +111,16 @@ Function fetchFile
 	Exch
 	Pop $0
 	DetailPrint "Section $0"
+	ReadINIStr $SECTION $SPRING_INI $0 "section"
+	${If} $SECTION >= 0
+	${AndIf} $Section <= 10
+		IntOp $SECTION ${SEC_0} + $SECTION
+                SectionGetFlags $SECTION $1 ; get current flags
+                IntOp $1 $1 & ${SF_SELECTED}
+                ${IfNot} $1 = ${SF_SELECTED} ; selected?
+			goto noFetch
+		${EndIf}
+	${EndIf}
 	ReadINIStr $MIRROR_COUNT $SPRING_INI $0 "mirror_count"
 	ReadINIStr $MIRROR $SPRING_INI $0 "mirror1"
 ;TODO: retry with mirrors
@@ -179,6 +222,7 @@ Function fetchFile
 		CreateShortCut "$SMPROGRAMS\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
 
 	${EndIf}
+	nofetch:
 	Pop $0
 
 FunctionEnd
@@ -196,7 +240,7 @@ Function runExit
 	${EndIf}
 FunctionEnd
 
-Section "Install remote files"
+Section "-Install remote files"
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
 	${While} $0 <= $FILES
@@ -204,40 +248,6 @@ Section "Install remote files"
 		Call fetchFile
 		IntOp $0 $0 + 1
 	${EndWhile}
-SectionEnd
-
-Section "Keep downloaded files" SEC_KEEPFILES
-SectionEnd
-
-; hidden section to be reused for sections read from .ini
-Section "" SEC_0
-SectionEnd
-
-Section "" SEC_1
-SectionEnd
-
-Section "" SEC_2
-SectionEnd
-
-Section "" SEC_3
-SectionEnd
-
-Section "" SEC_4
-SectionEnd
-
-Section "" SEC_5
-SectionEnd
-
-Section "" SEC_6
-SectionEnd
-
-Section "" SEC_7
-SectionEnd
-
-Section "" SEC_8
-SectionEnd
-
-Section "" SEC_9
 SectionEnd
 
 !macro initSection section text
