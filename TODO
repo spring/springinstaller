@@ -4,4 +4,5 @@
  * redownload file if md5 is wrong
  * unattended installer
  * parameter for forced update of .ini
+ * disallow .. in paths
 
