@@ -124,15 +124,10 @@ Function fetchFile
 	${EndIf}
 	; extract file if requested
 	${If} $7ZIP_EXTRACT_PATH != ""
-		${IfNot} $7ZIP_EXTRACT_PATH == "\"
-			SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
-		${EndIf}
+		SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
 		DetailPrint "Extracting $FILENAME to $INSTDIR$7ZIP_EXTRACT_PATH"
-
 		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
-		${IfNot} $7ZIP_EXTRACT_PATH == "\"
-			SetOutPath $INSTDIR
-		${EndIf}
+		SetOutPath $INSTDIR
 	${EndIf}
 	; run program if requested
 	${If} $EXEC != ""
@@ -235,9 +230,9 @@ SectionEnd
 Function .onInit
 	;initialize global vars
 	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
-	StrCpy $SOURCEDIR $EXEDIR
+	StrCpy $SOURCEDIR "$EXEDIR\$INSTALLERNAME - files"
 	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
-
+	CreateDirectory $SOURCEDIR
 	${IfNot} ${FileExists} $SPRING_INI ; ini doesn't exist, download it
 		Push "SPRING:"
 		Call ReadCustomerData
