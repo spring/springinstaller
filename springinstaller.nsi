@@ -4,7 +4,7 @@ SetCompressor /SOLID /FINAL lzma
 !addplugindir "plugins"
 
 !include "MUI2.nsh"
-;http://nsis.sourceforge.net/Docs/Modern%20UI%202/Readme.html
+; http://nsis.sourceforge.net/Docs/Modern%20UI%202/Readme.html
 ; Config for Modern Interface
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_TEXT "Thanks for installing this game"
@@ -75,6 +75,17 @@ SectionEnd
 Section "" SEC_9
 SectionEnd
 
+
+VAR /GLOBAL DESC_SECTION_0
+VAR /GLOBAL DESC_SECTION_1
+VAR /GLOBAL DESC_SECTION_2
+VAR /GLOBAL DESC_SECTION_3
+VAR /GLOBAL DESC_SECTION_4
+VAR /GLOBAL DESC_SECTION_5
+VAR /GLOBAL DESC_SECTION_6
+VAR /GLOBAL DESC_SECTION_7
+VAR /GLOBAL DESC_SECTION_8
+VAR /GLOBAL DESC_SECTION_9
 
 VAR /GLOBAL SPRING_INI ; name of ini file
 VAR /GLOBAL README ; http url to readme
@@ -315,6 +326,18 @@ Function .onInit
 		IntOp $0 $0 + 1
 	${EndWhile}
 
+	ReadINIStr $DESC_SECTION_0 $SPRING_INI ${SPRING_MAIN_SECTION} "section0_description"
+	ReadINIStr $DESC_SECTION_1 $SPRING_INI ${SPRING_MAIN_SECTION} "section1_description"
+	ReadINIStr $DESC_SECTION_2 $SPRING_INI ${SPRING_MAIN_SECTION} "section2_description"
+	ReadINIStr $DESC_SECTION_3 $SPRING_INI ${SPRING_MAIN_SECTION} "section3_description"
+	ReadINIStr $DESC_SECTION_4 $SPRING_INI ${SPRING_MAIN_SECTION} "section4_description"
+	ReadINIStr $DESC_SECTION_5 $SPRING_INI ${SPRING_MAIN_SECTION} "section5_description"
+	ReadINIStr $DESC_SECTION_6 $SPRING_INI ${SPRING_MAIN_SECTION} "section6_description"
+	ReadINIStr $DESC_SECTION_7 $SPRING_INI ${SPRING_MAIN_SECTION} "section7_description"
+	ReadINIStr $DESC_SECTION_8 $SPRING_INI ${SPRING_MAIN_SECTION} "section8_description"
+	ReadINIStr $DESC_SECTION_9 $SPRING_INI ${SPRING_MAIN_SECTION} "section9_description"
+
+
 	ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
 	ReadINIStr $README $SPRING_INI ${SPRING_MAIN_SECTION} "readme" ; url to readme
 	ReadINIStr $GAMENAME $SPRING_INI ${SPRING_MAIN_SECTION} "gamename" ; name of game
@@ -326,4 +349,18 @@ Function .onInit
 
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
+
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_0} $DESC_SECTION_0
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_1} $DESC_SECTION_1
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_2} $DESC_SECTION_2
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_3} $DESC_SECTION_3
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_4} $DESC_SECTION_4
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_5} $DESC_SECTION_5
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_6} $DESC_SECTION_6
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_7} $DESC_SECTION_7
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_8} $DESC_SECTION_8
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_9} $DESC_SECTION_9
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
