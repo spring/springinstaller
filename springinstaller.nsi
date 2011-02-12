@@ -248,6 +248,7 @@ FunctionEnd
 ; run on exit (when selected)
 Function runExit
 	${If} $EXEC_EXIT != ""
+	${AndIfNot} ${Silent}
 		Exec $EXEC_EXIT
 	${EndIf}
 FunctionEnd
@@ -287,22 +288,22 @@ Function .onInit
 			inetc::get $UPDATEURL $SPRING_INI /END
 			Pop $1
 			${If} $1 != "ok"
-				MessageBox MB_OK "Downloading $UPDATEURL failed."
+				MessageBox MB_OK "Downloading $UPDATEURL failed." /SD IDOK
 				Abort
 			${EndIf}
 		${Else}
-			MessageBox MB_OK "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH"
+			MessageBox MB_OK "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH" /SD IDOK
 		${EndIf}
 	${EndIf}
 
 	${IfNot} ${FileExists} $SPRING_INI
-		MessageBox MB_OK "Couldn't open $SPRING_INI"
+		MessageBox MB_OK "Couldn't open $SPRING_INI" /SD IDOK
 		Abort
 	${EndIf}
 
 	ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} "fileformat" ; count of files
 	${If} $R0 != "0.1"
-		MessageBox MB_OK "Invalid file format for $SPRING_INI: $R0, please update this installer!"
+		MessageBox MB_OK "Invalid file format for $SPRING_INI: $R0, please update this installer!" /SD IDOK
 		Abort
 	${EndIf}
 
