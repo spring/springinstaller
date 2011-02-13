@@ -278,6 +278,31 @@ Section "-Install" SEC_INSTALL
 	${EndWhile}
 SectionEnd
 
+;reads sizes from .ini and sets it to sections
+Function SetSizes
+	StrCpy $0 1
+	${While} $0 <= $FILES
+		;$0 counter
+		;$1 size of file
+		;$2 section #
+		;$3 SEC_ID
+		;$4 sectionsize
+		;$5 sectionname
+		StrCpy $5 "file$0"
+
+		ReadINIStr $1 $SPRING_INI $5 "size"
+		ReadINIStr $2 $SPRING_INI $5 "section"
+		IntOp $3 ${SEC_0} + $2
+		SectionGetSize $3 $4
+		; size is in kbytes
+		IntOp $1 $1 / 1024
+		IntOp $4 $1 + $4
+		SectionSetSize $3 $4
+		IntOp $0 $0 + 1
+	${EndWhile}
+
+FunctionEnd
+
 Function .onInit
 	;initialize global vars
 	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
@@ -364,6 +389,9 @@ Function .onInit
 	ReadINIStr $SIZE "$SPRING_INI" ${SPRING_MAIN_SECTION} "size" ; size of all installed files
 	!insertmacro escapeVar $EXEC_EXIT
 	!insertmacro escapeVar $EXEC_EXIT_PARAMETER
+	
+	call SetSizes
+	
 
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
