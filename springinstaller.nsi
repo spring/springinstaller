@@ -18,7 +18,7 @@ SetCompressor /SOLID /FINAL lzma
 !define MUI_FINISHPAGE_RUN_FUNCTION runExit
 
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\nsis.bmp" ; optional
+;!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\nsis.bmp" ; optional
 
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 ;!define MUI_WELCOMEPAGE_TITLE "Hey"
@@ -247,6 +247,7 @@ Function fetchFile
 		CreateShortCut "$SMPROGRAMS\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
 	${EndIf}
 	${If} $DIRECTORY != ""
+		CreateDirectory "$INSTDIR\$DIRECTORY"
 		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
 	${EndIf}
 	nofetch:
