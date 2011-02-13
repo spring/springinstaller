@@ -97,6 +97,7 @@ VAR /GLOBAL INSTALLERNAME ; name of installer.exe without .exe
 VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
 VAR /GLOBAL SOURCEDIR
 VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
+VAR /GLOBAL EXEC_EXIT_PARAMETER ; to be run on exit (optional)
 VAR /GLOBAL SIZE ; size of installed files
 VAR /GLOBAL UPDATEURL ; url of this file
 
@@ -124,6 +125,7 @@ VAR /GLOBAL SECTION ; section for current file
 	!insertmacro ReplaceSubStr ${var} "%SPRING_INI%" $SPRING_INI
 	!insertmacro ReplaceSubStr ${var} "%INSTALLDIR%" $INSTDIR
 	!insertmacro ReplaceSubStr ${var} "%VERSION%" $VERSION
+	!insertmacro ReplaceSubStr ${var} "%STARTMENU%" $SMPROGRAMS
 !macroend
 
 
@@ -243,7 +245,9 @@ Function fetchFile
 		${EndIf}
 		CreateDirectory "$SMPROGRAMS\$SHORTCUT_DIRECTORY"
 		CreateShortCut "$SMPROGRAMS\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
-
+	${EndIf}
+	${If} $DIRECTORY != ""
+		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
 	${EndIf}
 	nofetch:
 	Pop $0
@@ -259,7 +263,7 @@ FunctionEnd
 Function runExit
 	${If} $EXEC_EXIT != ""
 	${AndIfNot} ${Silent}
-		Exec $EXEC_EXIT
+		ExecShell "open" $EXEC_EXIT $EXEC_EXIT_PARAMETER
 	${EndIf}
 FunctionEnd
 
@@ -355,8 +359,10 @@ Function .onInit
 	ReadINIStr $VERSION $SPRING_INI ${SPRING_MAIN_SECTION} "version" ; version of engine
 	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
 	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
+	ReadINIStr $EXEC_EXIT_PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit_parameter" ; version of engine
 	ReadINIStr $SIZE "$SPRING_INI" ${SPRING_MAIN_SECTION} "size" ; size of all installed files
 	!insertmacro escapeVar $EXEC_EXIT
+	!insertmacro escapeVar $EXEC_EXIT_PARAMETER
 
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
