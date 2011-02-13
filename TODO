@@ -3,7 +3,5 @@
  * add custom image
  * make use of mirror links when download fails
  * redownload file if md5 is wrong
- * unattended installer
- * parameter for forced update of .ini
  * disallow .. in paths
  * add sizes for files
