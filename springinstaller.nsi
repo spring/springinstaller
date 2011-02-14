@@ -180,7 +180,7 @@ Function fetchFile
 		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
 		Pop $R0
 		${If} $R0 != "OK"
-			DetailPrint "Download failed"
+			DetailPrint "Download failed $R0"
 			Abort
 		${EndIf}
 
