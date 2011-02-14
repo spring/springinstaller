@@ -136,7 +136,7 @@ Function fetchFile
 	Push $0
 	Exch
 	Pop $0 ; Section name, for example File0
-	DetailPrint "Section $0"
+	DetailPrint "Section $SPRING_INI:$0"
 	ReadINIStr $SECTION $SPRING_INI $0 "section"
 	${If} $SECTION >= 0
 	${AndIf} $Section <= 10
@@ -219,6 +219,7 @@ Function fetchFile
 
 	${If} $ZIP_EXTRACT_PATH != ""
 		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
+		CreateDirectory "$INSTDIR\$ZIP_EXTRACT_PATH"
 		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
 		Pop $R0
 		${If} $R0 != "success"
@@ -256,15 +257,15 @@ Function fetchFile
 	${If} $INCLUDE == "yes"
 		Push $SPRING_INI ; save var on stack
 		Push $FILES
-
-		ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
+		StrCpy $SPRING_INI "$SOURCEDIR\$FILENAME"
+		DetailPrint "Using include $SPRING_INI"
+		ReadINIStr $3 $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
 		StrCpy $0 1
-		${While} $0 <= $FILES
+		${While} $0 <= $3
 			Push "file$0"
 			Call fetchFile
 			IntOp $0 $0 + 1
 		${EndWhile}
-
 		Pop $FILES ; restore var from stack
 		Pop $SPRING_INI
 	${EndIf}
