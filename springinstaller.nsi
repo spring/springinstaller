@@ -117,6 +117,7 @@ VAR /GLOBAL SHORTCUT_PARAMETER ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SECTION ; section for current file
+VAR /GLOBAL INCLUDE ; ==yes if file is to be included
 
 !macro escapeVar var
 	!insertmacro ReplaceSubStr ${var} "%GAMENAME%" $GAMENAME
@@ -134,7 +135,7 @@ VAR /GLOBAL SECTION ; section for current file
 Function fetchFile
 	Push $0
 	Exch
-	Pop $0
+	Pop $0 ; Section name, for example File0
 	DetailPrint "Section $0"
 	ReadINIStr $SECTION $SPRING_INI $0 "section"
 	${If} $SECTION >= 0
@@ -146,6 +147,7 @@ Function fetchFile
 			goto noFetch
 		${EndIf}
 	${EndIf}
+
 	ReadINIStr $MIRROR_COUNT $SPRING_INI $0 "mirror_count"
 	ReadINIStr $MIRROR $SPRING_INI $0 "mirror1"
 ;TODO: retry with mirrors
@@ -164,6 +166,7 @@ Function fetchFile
 	ReadINIStr $SHORTCUT_PARAMETER $SPRING_INI $0 "shortcut_parameter"
 	ReadINIStr $SHORTCUT_ICON $SPRING_INI $0 "shortcut_icon"
 	ReadINIStr $SHORTCUT_DIRECTORY $SPRING_INI $0 "shortcut_directory"
+	ReadINIStr $INCLUDE $SPRING_INI $0 "isinclude"
 
 	!insertmacro escapeVar $FILENAME
 	!insertmacro escapeVar $MIRROR
@@ -175,8 +178,8 @@ Function fetchFile
 	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"  ; skip download if file is already there
 		DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
 		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
-		Pop $0
-		${If} $0 != "OK"
+		Pop $R0
+		${If} $R0 != "OK"
 			DetailPrint "Download failed"
 			Abort
 		${EndIf}
@@ -190,9 +193,9 @@ Function fetchFile
 	${If} "$MD5" != "" ; only check md5 is set in .ini
 		DetailPrint "$SOURCEDIR\$FILENAME :"
 		md5dll::GetMD5File "$SOURCEDIR\$FILENAME"
-		Pop $0
-		${If} $0 == $MD5
-			DetailPrint "md5 match:[$0]"
+		Pop $R0
+		${If} $R0 == $MD5
+			DetailPrint "md5 match:[$R0]"
 			${If} $DIRECTORY != ""
 				CreateDirectory "$INSTDIR\$DIRECTORY"
 				CopyFiles /FILESONLY "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
@@ -200,7 +203,7 @@ Function fetchFile
 				DetailPrint "$FILENAME has no 'directory' set in config, not copying"
 			${EndIf}
 		${Else}
-			DetailPrint "md5 mismatch:[$0]"
+			DetailPrint "md5 mismatch:[$R0]"
 			DetailPrint "expected:    [$MD5]"
 			Abort
 			;TODO: prompt for redownload?
@@ -217,8 +220,8 @@ Function fetchFile
 	${If} $ZIP_EXTRACT_PATH != ""
 		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
 		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
-		Pop $0
-		${If} $0 != "success"
+		Pop $R0
+		${If} $R0 != "success"
 			DetailPrint "Unzipping error"
 			Abort
 		${EndIf}
@@ -250,6 +253,22 @@ Function fetchFile
 		CreateDirectory "$INSTDIR\$DIRECTORY"
 		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
 	${EndIf}
+	${If} $INCLUDE == "yes"
+		Push $SPRING_INI ; save var on stack
+		Push $FILES
+
+		ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
+		StrCpy $0 1
+		${While} $0 <= $FILES
+			Push "file$0"
+			Call fetchFile
+			IntOp $0 $0 + 1
+		${EndWhile}
+
+		Pop $FILES ; restore var from stack
+		Pop $SPRING_INI
+	${EndIf}
+
 	nofetch:
 	Pop $0
 
