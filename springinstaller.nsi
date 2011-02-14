@@ -130,6 +130,15 @@ VAR /GLOBAL INCLUDE ; ==yes if file is to be included
 !macroend
 
 
+Function FatalError
+	Pop $0
+	DetailPrint $0
+	MessageBox MB_YESNO "Error occured: $0, would you like to open the help forum?" IDNO noshow
+	ExecShell "open" "http://springrts.com/phpbb/viewtopic.php?f=14&t=24724"
+	:noshow
+	Abort
+FunctionEnd
+
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
 Function fetchFile
@@ -180,13 +189,14 @@ Function fetchFile
 		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
 		Pop $R0
 		${If} $R0 != "OK"
-			DetailPrint "Download failed $R0"
-			Abort
+			Rename $SPRING_INI "$SPRING_INI.invalid"
+			Push "Download failed $R0"
+			Call FatalError
 		${EndIf}
 
 		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"
-			DetailPrint "$SOURCEDIR\$FILENAME didn't exist after download"
-			Abort
+			Push "$SOURCEDIR\$FILENAME didn't exist after download"
+			Call FatalError
 		${EndIf}
 	${EndIf}
 
@@ -203,9 +213,8 @@ Function fetchFile
 				DetailPrint "$FILENAME has no 'directory' set in config, not copying"
 			${EndIf}
 		${Else}
-			DetailPrint "md5 mismatch:[$R0]"
-			DetailPrint "expected:    [$MD5]"
-			Abort
+			Push "$FILENAME: md5 mismatch:[$R0]"
+			Call FatalError
 			;TODO: prompt for redownload?
 		${EndIf}
 	${EndIf}
@@ -223,8 +232,8 @@ Function fetchFile
 		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
 		Pop $R0
 		${If} $R0 != "success"
-			DetailPrint "Unzipping error"
-			Abort
+			Push "Unzipping error $FILENAME"
+			Call FatalError
 		${EndIf}
 	${EndIf}
 
@@ -348,8 +357,8 @@ Function .onInit
 			inetc::get $UPDATEURL $SPRING_INI /END
 			Pop $1
 			${If} $1 != "ok"
-				MessageBox MB_OK "Downloading $UPDATEURL failed." /SD IDOK
-				Abort
+				Push "Downloading $UPDATEURL failed."
+				Call FatalError
 			${EndIf}
 		${Else}
 			MessageBox MB_OK "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH" /SD IDOK
@@ -357,14 +366,14 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${FileExists} $SPRING_INI
-		MessageBox MB_OK "Couldn't open $SPRING_INI" /SD IDOK
-		Abort
+		Push "Couldn't open $SPRING_INI"
+		Call FatalError
 	${EndIf}
 
 	ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} "fileformat" ; count of files
 	${If} $R0 != "0.1"
-		MessageBox MB_OK "Invalid file format for $SPRING_INI: $R0, please update this installer!" /SD IDOK
-		Abort
+		Push "Invalid file format for $SPRING_INI: $R0, please update this installer!"
+		Call FatalError
 	${EndIf}
 
 	StrCpy $0 0
