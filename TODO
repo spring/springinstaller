@@ -5,5 +5,10 @@
  * redownload file if md5 is wrong
  * disallow .. in paths
  * always download included .ini files + add "offline-mode" switch? (or force download?)
-
+ * allow something like this:
+	[fileXY]
+	exec=%INSTDIR%\rapid.exe pin ba:latest
+	
+	[fileXZ]
+	exec=%INSTDIR%\pr-downloader --download-map "balanced annihilation"
 
