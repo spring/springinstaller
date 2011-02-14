@@ -94,7 +94,6 @@ VAR /GLOBAL VERSION ; version of spring engine
 VAR /GLOBAL FILES ; count of files to install
 VAR /GLOBAL GAMENAME ; name of the game, is used as filename!
 VAR /GLOBAL INSTALLERNAME ; name of installer.exe without .exe
-VAR /GLOBAL PARAMETER ; parameters to add to spring.exe
 VAR /GLOBAL SOURCEDIR
 VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
 VAR /GLOBAL EXEC_EXIT_PARAMETER ; to be run on exit (optional)
@@ -135,7 +134,7 @@ Function FatalError
 	DetailPrint $0
 	MessageBox MB_YESNO "Error occured: $0, would you like to open the help forum?" IDNO noshow
 	ExecShell "open" "http://springrts.com/phpbb/viewtopic.php?f=14&t=24724"
-	:noshow
+	noshow:
 	Abort
 FunctionEnd
 
@@ -412,9 +411,8 @@ Function .onInit
 	ReadINIStr $README $SPRING_INI ${SPRING_MAIN_SECTION} "readme" ; url to readme
 	ReadINIStr $GAMENAME $SPRING_INI ${SPRING_MAIN_SECTION} "gamename" ; name of game
 	ReadINIStr $VERSION $SPRING_INI ${SPRING_MAIN_SECTION} "version" ; version of engine
-	ReadINIStr $PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "parameter" ; version of engine
-	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; version of engine
-	ReadINIStr $EXEC_EXIT_PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit_parameter" ; version of engine
+	ReadINIStr $EXEC_EXIT "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit" ; (optional) execute on clock on "Finish" button
+	ReadINIStr $EXEC_EXIT_PARAMETER "$SPRING_INI" ${SPRING_MAIN_SECTION} "runonexit_parameter" ; parameter for exec_exit
 	ReadINIStr $SIZE "$SPRING_INI" ${SPRING_MAIN_SECTION} "size" ; size of all installed files
 	!insertmacro escapeVar $EXEC_EXIT
 	!insertmacro escapeVar $EXEC_EXIT_PARAMETER
