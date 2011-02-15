@@ -292,7 +292,11 @@ FunctionEnd
 Function runExit
 	${If} $EXEC_EXIT != ""
 	${AndIfNot} ${Silent}
+		ClearErrors
 		ExecShell "open" $EXEC_EXIT $EXEC_EXIT_PARAMETER
+		${If} ${Errors}
+			MessageBox MB_OK "Could not run '$EXEC_EXIT' '$EXEC_EXIT_PARAMETER'"
+		${EndIf}
 	${EndIf}
 FunctionEnd
 
