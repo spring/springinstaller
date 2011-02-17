@@ -44,6 +44,8 @@ SetCompressor /SOLID /FINAL lzma
 !include "include/StrLoc.nsi"
 !include "include/ReadCustomerData.nsi"
 !include "include/UninstallLog.nsh"
+!include "include/unpack.nsh"
+
 
 Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
@@ -251,14 +253,7 @@ Function fetchFile
 	${EndIf}
 
 	${If} $ZIP_EXTRACT_PATH != ""
-		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
-		${CreateDirectory} "$INSTDIR\$ZIP_EXTRACT_PATH"
-		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
-		Pop $R0
-		${If} $R0 != "success"
-			Push "Unzipping error $FILENAME"
-			Call FatalError
-		${EndIf}
+		!insertmacro unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
 	${EndIf}
 
 	${If} $DIRECTORY != ""

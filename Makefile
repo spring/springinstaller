@@ -1,5 +1,5 @@
 
-springinstaller.exe: springinstaller.nsi plugins/*.dll
+springinstaller.exe: springinstaller.nsi plugins/*.dll include/*.nsh
 	makensis -V3 springinstaller.nsi
 
 spring-setup.exe: springinstaller.exe

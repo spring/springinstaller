@@ -111,3 +111,4 @@
       FileOpen $UninstLog "$INSTDIR\${UninstLog}" a
       FileSeek $UninstLog 0 END
   SectionEnd
+
