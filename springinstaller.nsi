@@ -241,6 +241,7 @@ Function fetchFile
 			;TODO: prompt for redownload?
 		${EndIf}
 	${EndIf}
+;TODO: add extracted files to uninstall log
 	; extract file if requested
 	${If} $7ZIP_EXTRACT_PATH != ""
 		${SetOutPath} "$INSTDIR\$7ZIP_EXTRACT_PATH"
