@@ -75,7 +75,23 @@ SectionEnd
 Section "" SEC_9
 SectionEnd
 
+Section "" SEC_10
+SectionEnd
 
+Section "" SEC_11
+SectionEnd
+
+Section "" SEC_12
+SectionEnd
+
+Section "" SEC_13
+SectionEnd
+
+Section "" SEC_14
+SectionEnd
+
+Section "" SEC_15
+SectionEnd
 
 VAR /GLOBAL DESC_SECTION_0
 VAR /GLOBAL DESC_SECTION_1
@@ -87,6 +103,12 @@ VAR /GLOBAL DESC_SECTION_6
 VAR /GLOBAL DESC_SECTION_7
 VAR /GLOBAL DESC_SECTION_8
 VAR /GLOBAL DESC_SECTION_9
+VAR /GLOBAL DESC_SECTION_10
+VAR /GLOBAL DESC_SECTION_11
+VAR /GLOBAL DESC_SECTION_12
+VAR /GLOBAL DESC_SECTION_13
+VAR /GLOBAL DESC_SECTION_14
+VAR /GLOBAL DESC_SECTION_15
 
 VAR /GLOBAL SPRING_INI ; name of ini file
 VAR /GLOBAL README ; http url to readme
@@ -117,6 +139,7 @@ VAR /GLOBAL SHORTCUT_ICON ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SHORTCUT_DIRECTORY ; parameter, %INSTALLDIR% is replaced
 VAR /GLOBAL SECTION ; section for current file
 VAR /GLOBAL INCLUDE ; ==yes if file is to be included
+VAR /GLOBAL ALWAYSUPDATE ; always redownload file
 
 !macro escapeVar var
 	!insertmacro ReplaceSubStr ${var} "%GAMENAME%" $GAMENAME
@@ -175,6 +198,7 @@ Function fetchFile
 	ReadINIStr $SHORTCUT_ICON $SPRING_INI $0 "shortcut_icon"
 	ReadINIStr $SHORTCUT_DIRECTORY $SPRING_INI $0 "shortcut_directory"
 	ReadINIStr $INCLUDE $SPRING_INI $0 "isinclude"
+	ReadINIStr $ALWAYSUPDATE $SPRING_INI $0 "alwaysupdate"
 
 	!insertmacro escapeVar $FILENAME
 	!insertmacro escapeVar $MIRROR
@@ -183,7 +207,8 @@ Function fetchFile
 		StrCpy $MIRROR_COUNT 1
 	${EndIf}
 
-	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"  ; skip download if file is already there
+	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME" ; skip download if file is already there
+	${OrIf} $ALWAYSUPDATE == "yes" 
 		DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
 		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
 		Pop $R0
@@ -374,7 +399,7 @@ Function .onInit
 	${EndIf}
 
 	ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} "fileformat" ; count of files
-	${If} $R0 != "0.1"
+	${If} $R0 != "0.2"
 		Push "Invalid file format for $SPRING_INI: $R0, please update this installer!"
 		Call FatalError
 	${EndIf}
@@ -409,6 +434,12 @@ Function .onInit
 	ReadINIStr $DESC_SECTION_7 $SPRING_INI ${SPRING_MAIN_SECTION} "section7_description"
 	ReadINIStr $DESC_SECTION_8 $SPRING_INI ${SPRING_MAIN_SECTION} "section8_description"
 	ReadINIStr $DESC_SECTION_9 $SPRING_INI ${SPRING_MAIN_SECTION} "section9_description"
+	ReadINIStr $DESC_SECTION_10 $SPRING_INI ${SPRING_MAIN_SECTION} "section10_description"
+	ReadINIStr $DESC_SECTION_11 $SPRING_INI ${SPRING_MAIN_SECTION} "section11_description"
+	ReadINIStr $DESC_SECTION_12 $SPRING_INI ${SPRING_MAIN_SECTION} "section12_description"
+	ReadINIStr $DESC_SECTION_13 $SPRING_INI ${SPRING_MAIN_SECTION} "section13_description"
+	ReadINIStr $DESC_SECTION_14 $SPRING_INI ${SPRING_MAIN_SECTION} "section14_description"
+	ReadINIStr $DESC_SECTION_15 $SPRING_INI ${SPRING_MAIN_SECTION} "section15_description"
 
 
 	ReadINIStr $FILES $SPRING_INI ${SPRING_MAIN_SECTION} "files" ; count of files
@@ -439,5 +470,11 @@ FunctionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_7} $DESC_SECTION_7
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_8} $DESC_SECTION_8
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_9} $DESC_SECTION_9
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_10} $DESC_SECTION_10
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_11} $DESC_SECTION_11
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_12} $DESC_SECTION_12
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_13} $DESC_SECTION_13
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_14} $DESC_SECTION_14
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_15} $DESC_SECTION_15
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
