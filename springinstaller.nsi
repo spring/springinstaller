@@ -370,7 +370,7 @@ FunctionEnd
 Function .onInit
 	;initialize global vars
 	StrCpy $INSTALLERNAME $EXEFILE -4 ; remove .exe suffix from installer name
-	StrCpy $SOURCEDIR "$EXEDIR\$INSTALLERNAME - files"
+	StrCpy $SOURCEDIR "$TEMP\$INSTALLERNAME - files"
 	StrCpy $SPRING_INI "$SOURCEDIR\$INSTALLERNAME.ini"
 	CreateDirectory $SOURCEDIR
 
@@ -465,63 +465,66 @@ Function .onInit
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
 
+Section /o "Clean downloaded files"  SEC_CLEAN
+	; TODO
+	MessageBox MB_OK "Please delete $SOURCEDIR"
+SectionEnd
+
 ;--------------------------------
 ; Uninstaller
 ;--------------------------------
 Section Uninstall
-  ;Can't uninstall if uninstall log is missing!
-  IfFileExists "$INSTDIR\${UninstLog}" +3
-    MessageBox MB_OK|MB_ICONSTOP "$(UninstLogMissing)"
-      Abort
+	;Can't uninstall if uninstall log is missing!
+	IfFileExists "$INSTDIR\${UninstLog}" +4
+		Delete "$INSTDIR\uninstall.exe"
+		MessageBox MB_OK|MB_ICONSTOP "$(UninstLogMissing)"
+		Abort
  
-  Push $R0
-  Push $R1
-  Push $R2
-  SetFileAttributes "$INSTDIR\${UninstLog}" NORMAL
-  FileOpen $UninstLog "$INSTDIR\${UninstLog}" r
-  StrCpy $R1 -1
+	Push $R0
+	Push $R1
+	Push $R2
+	SetFileAttributes "$INSTDIR\${UninstLog}" NORMAL
+	FileOpen $UninstLog "$INSTDIR\${UninstLog}" r
+	StrCpy $R1 -1
  
-  GetLineCount:
-    ClearErrors
-    FileRead $UninstLog $R0
-    IntOp $R1 $R1 + 1
-    StrCpy $R0 $R0 -2
-    Push $R0   
-    IfErrors 0 GetLineCount
+	GetLineCount:
+		ClearErrors
+		FileRead $UninstLog $R0
+		IntOp $R1 $R1 + 1
+		StrCpy $R0 $R0 -2
+		Push $R0   
+		IfErrors 0 GetLineCount
+	Pop $R0
  
-  Pop $R0
+	LoopRead:
+		StrCmp $R1 0 LoopDone
+		Pop $R0
  
-  LoopRead:
-    StrCmp $R1 0 LoopDone
-    Pop $R0
+		IfFileExists "$R0\*.*" 0 +3
+			RMDir $R0  #is dir
+		Goto +9
+		IfFileExists $R0 0 +3
+			Delete $R0 #is file
+		Goto +6
+		StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +3
+		DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element
+		Goto +3
+		StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +2
+		DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element 
+		IntOp $R1 $R1 - 1
+	Goto LoopRead
+	LoopDone:
+	FileClose $UninstLog
+  	Delete "$INSTDIR\${UninstLog}"
+	Pop $R2
+	Pop $R1
+	Pop $R0
  
-    IfFileExists "$R0\*.*" 0 +3
-      RMDir $R0  #is dir
-    Goto +9
-    IfFileExists $R0 0 +3
-      Delete $R0 #is file
-    Goto +6
-    StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +3
-      DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element
-    Goto +3
-    StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +2
-      DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element
- 
-    IntOp $R1 $R1 - 1
-    Goto LoopRead
-  LoopDone:
-  FileClose $UninstLog
-  Delete "$INSTDIR\${UninstLog}"
-  Pop $R2
-  Pop $R1
-  Pop $R0
- 
-  ;Remove registry keys
-    ;DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
-    ;DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}"
+	;Remove registry keys
+	;DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
+	;DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}"
+	Delete "$INSTDIR\uninstall.exe"
 SectionEnd
-
-
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_0} $DESC_SECTION_0
@@ -540,5 +543,6 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_13} $DESC_SECTION_13
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_14} $DESC_SECTION_14
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_15} $DESC_SECTION_15
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_CLEAN} "Delete downloadcache files at the end of installation"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
