@@ -1,5 +1,6 @@
- * move blocks into functions
  * add uninstaller: log each file is written into install.log and use this file for uninstall
+	for unzipping files: use temp dir, list all files there, move them out of there (+add to log)
+ * move blocks into functions
  * add custom image
  * make use of mirror links when download fails
  * redownload file if md5 is wrong

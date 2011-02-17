@@ -39,6 +39,7 @@ SetCompressor /SOLID /FINAL lzma
 !include "include/strrep.nsi"
 !include "include/StrLoc.nsi"
 !include "include/ReadCustomerData.nsi"
+!include "include/UninstallLog.nsh"
 
 Outfile "springinstaller.exe"
 InstallDir "$PROGRAMFILES\Spring"
@@ -244,15 +245,15 @@ Function fetchFile
 	${EndIf}
 	; extract file if requested
 	${If} $7ZIP_EXTRACT_PATH != ""
-		SetOutPath "$INSTDIR\$7ZIP_EXTRACT_PATH"
+		${SetOutPath} "$INSTDIR\$7ZIP_EXTRACT_PATH"
 		DetailPrint "Extracting $FILENAME to $INSTDIR$7ZIP_EXTRACT_PATH"
 		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
-		SetOutPath $INSTDIR
+		${SetOutPath} $INSTDIR
 	${EndIf}
 
 	${If} $ZIP_EXTRACT_PATH != ""
 		DetailPrint "Extracting $FILENAME to $ZIP_EXTRACT_PATH"
-		CreateDirectory "$INSTDIR\$ZIP_EXTRACT_PATH"
+		${CreateDirectory} "$INSTDIR\$ZIP_EXTRACT_PATH"
 		nsisunz::Unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
 		Pop $R0
 		${If} $R0 != "success"
@@ -275,8 +276,8 @@ Function fetchFile
 	${EndIf}
 
 	${If} $DIRECTORY != ""
-		CreateDirectory "$INSTDIR\$DIRECTORY"
-		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
+		${CreateDirectory} "$INSTDIR\$DIRECTORY"
+		${CopyFiles} "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
 	${EndIf}
 	${If} $SHORTCUT != ""
 		!insertmacro escapeVar $SHORTCUT
@@ -286,8 +287,8 @@ Function fetchFile
 		!insertmacro escapeVar $SHORTCUT_DIRECTORY
 		StrCpy "$SHORTCUT_DIRECTORY" "$SMPROGRAMS\$GAMENAME\$SHORTCUT_DIRECTORY" ; use same prefix for all shortcuts
 
-		CreateDirectory $SHORTCUT_DIRECTORY
-		CreateShortCut "$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
+		${CreateDirectory} $SHORTCUT_DIRECTORY
+		${CreateShortCut} "$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
 	${EndIf}
 	${If} $INCLUDE == "yes"
 		Push $SPRING_INI ; save var on stack
@@ -459,6 +460,63 @@ Function .onInit
 
 ;	SectionSetSize SEC_INSTALL $SIZE
 FunctionEnd
+
+;--------------------------------
+; Uninstaller
+;--------------------------------
+Section Uninstall
+  ;Can't uninstall if uninstall log is missing!
+  IfFileExists "$INSTDIR\${UninstLog}" +3
+    MessageBox MB_OK|MB_ICONSTOP "$(UninstLogMissing)"
+      Abort
+ 
+  Push $R0
+  Push $R1
+  Push $R2
+  SetFileAttributes "$INSTDIR\${UninstLog}" NORMAL
+  FileOpen $UninstLog "$INSTDIR\${UninstLog}" r
+  StrCpy $R1 -1
+ 
+  GetLineCount:
+    ClearErrors
+    FileRead $UninstLog $R0
+    IntOp $R1 $R1 + 1
+    StrCpy $R0 $R0 -2
+    Push $R0   
+    IfErrors 0 GetLineCount
+ 
+  Pop $R0
+ 
+  LoopRead:
+    StrCmp $R1 0 LoopDone
+    Pop $R0
+ 
+    IfFileExists "$R0\*.*" 0 +3
+      RMDir $R0  #is dir
+    Goto +9
+    IfFileExists $R0 0 +3
+      Delete $R0 #is file
+    Goto +6
+    StrCmp $R0 "${REG_ROOT} ${REG_APP_PATH}" 0 +3
+      DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}" #is Reg Element
+    Goto +3
+    StrCmp $R0 "${REG_ROOT} ${UNINSTALL_PATH}" 0 +2
+      DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}" #is Reg Element
+ 
+    IntOp $R1 $R1 - 1
+    Goto LoopRead
+  LoopDone:
+  FileClose $UninstLog
+  Delete "$INSTDIR\${UninstLog}"
+  Pop $R2
+  Pop $R1
+  Pop $R0
+ 
+  ;Remove registry keys
+    ;DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}"
+    ;DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}"
+SectionEnd
+
 
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
