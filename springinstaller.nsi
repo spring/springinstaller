@@ -423,9 +423,16 @@ Function .onInit
 		SectionSetText $2 $R0
 		StrCpy $1 "section$0_force"
 		ReadINIStr $R0 $SPRING_INI ${SPRING_MAIN_SECTION} $1
+		StrCpy $1 "section$0_selected"
+		ReadINIStr $R1 $SPRING_INI ${SPRING_MAIN_SECTION} $1
 		${If} $R0 == "yes"
 	                SectionGetFlags $2 $3 ; get current flags
 	                IntOp $3 $3 | ${SF_RO}
+			SectionSetFlags $2 $3
+		${EndIf}
+		${If} $R1 == "no"
+	                SectionGetFlags $2 $3 ; get current flags
+	                IntOp $3 $3 - ${SF_SELECTED}
 			SectionSetFlags $2 $3
 		${EndIf}
 		IntOp $0 $0 + 1
