@@ -1,3 +1,7 @@
+!define APP_NAME "Spring Installer"
+!define APP_REG_ROOT "HKLM"
+!define APP_REG_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+
 SetCompress force
 SetCompressor /SOLID /FINAL lzma
 
@@ -231,12 +235,6 @@ Function fetchFile
 		Pop $R0
 		${If} $R0 == $MD5
 			DetailPrint "md5 match:[$R0]"
-			${If} $DIRECTORY != ""
-				CreateDirectory "$INSTDIR\$DIRECTORY"
-				CopyFiles /FILESONLY "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
-			${Else}
-				DetailPrint "$FILENAME has no 'directory' set in config, not copying"
-			${EndIf}
 		${Else}
 			Push "$FILENAME: md5 mismatch:[$R0]"
 			Call FatalError
@@ -262,6 +260,11 @@ Function fetchFile
 		${EndIf}
 	${EndIf}
 
+	${If} $DIRECTORY != ""
+		${CreateDirectory} "$INSTDIR\$DIRECTORY"
+		${CopyFiles} "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY\$FILENAME"
+	${EndIf}
+
 	; run program if requested
 	${If} $EXEC != ""
 		!insertmacro escapeVar $EXEC
@@ -275,10 +278,6 @@ Function fetchFile
 		${EndIf}
 	${EndIf}
 
-	${If} $DIRECTORY != ""
-		${CreateDirectory} "$INSTDIR\$DIRECTORY"
-		${CopyFiles} "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
-	${EndIf}
 	${If} $SHORTCUT != ""
 		!insertmacro escapeVar $SHORTCUT
 		!insertmacro escapeVar $SHORTCUT_TARGET
@@ -328,7 +327,11 @@ Function runExit
 	${EndIf}
 FunctionEnd
 
+
 Section "-Install" SEC_INSTALL
+	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "DisplayName" "${APP_NAME}"
+	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
 	${While} $0 <= $FILES
@@ -336,6 +339,7 @@ Section "-Install" SEC_INSTALL
 		Call fetchFile
 		IntOp $0 $0 + 1
 	${EndWhile}
+	writeUninstaller "$INSTDIR\uninstall.exe"
 SectionEnd
 
 ;reads sizes from .ini and sets it to sections
@@ -497,11 +501,11 @@ Section Uninstall
     IfFileExists $R0 0 +3
       Delete $R0 #is file
     Goto +6
-    StrCmp $R0 "${REG_ROOT} ${REG_APP_PATH}" 0 +3
-      DeleteRegKey ${REG_ROOT} "${REG_APP_PATH}" #is Reg Element
+    StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +3
+      DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element
     Goto +3
-    StrCmp $R0 "${REG_ROOT} ${UNINSTALL_PATH}" 0 +2
-      DeleteRegKey ${REG_ROOT} "${UNINSTALL_PATH}" #is Reg Element
+    StrCmp $R0 "${APP_REG_ROOT} ${APP_REG_UNINSTALL}" 0 +2
+      DeleteRegKey ${APP_REG_ROOT} "${APP_REG_UNINSTALL}" #is Reg Element
  
     IntOp $R1 $R1 - 1
     Goto LoopRead
