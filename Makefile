@@ -4,7 +4,7 @@ springinstaller.exe: springinstaller.nsi plugins/*.dll
 
 test: springinstaller.exe
 	cp springinstaller.exe test.exe
-	echo "SPRING:https://github.com/abma/springinstaller/raw/master/springinstaller.ini" >>test.exe
+	echo "SPRING:https://github.com/spring/springinstaller/raw/master/repo/springinstaller.ini" >>test.exe
 	wine test.exe
 
 release: springinstaller.exe
