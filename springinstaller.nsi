@@ -206,21 +206,21 @@ Function fetchFile
 	${If} $MIRROR_COUNT == ""
 		StrCpy $MIRROR_COUNT 1
 	${EndIf}
-
-	${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME" ; skip download if file is already there
-	${OrIf} $ALWAYSUPDATE == "yes" 
-		DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
-		inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
-		Pop $R0
-		${If} $R0 != "OK"
-			Rename $SPRING_INI "$SPRING_INI.invalid"
-			Push "Download failed $R0"
-			Call FatalError
-		${EndIf}
-
-		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"
-			Push "$SOURCEDIR\$FILENAME didn't exist after download"
-			Call FatalError
+	${If} $FILENAME != "" ; non-downloading actions are possible, too
+		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME" ; skip download if file is already there
+		${OrIf} $ALWAYSUPDATE == "yes" 
+			DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
+			inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
+			Pop $R0
+			${If} $R0 != "OK"
+				Rename $SPRING_INI "$SPRING_INI.invalid"
+				Push "Download failed $R0"
+				Call FatalError
+			${EndIf}
+			${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME"
+				Push "$SOURCEDIR\$FILENAME didn't exist after download"
+				Call FatalError
+			${EndIf}
 		${EndIf}
 	${EndIf}
 
