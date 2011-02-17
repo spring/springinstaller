@@ -474,6 +474,7 @@ FunctionEnd
 
 Section /o "Clean downloaded files"  SEC_CLEAN
 	; TODO
+	Delete "$SPRING_INI"
 	MessageBox MB_OK "Please delete $SOURCEDIR"
 SectionEnd
 
