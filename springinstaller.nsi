@@ -405,7 +405,7 @@ Function .onInit
 	${EndIf}
 
 	StrCpy $0 0
-	${While} $0 < 10
+	${While} $0 < 15
 		; $0=counter
 		; $1=option in .ini
 		; $2=SEC_ID
