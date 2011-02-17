@@ -2,12 +2,11 @@
 springinstaller.exe: springinstaller.nsi plugins/*.dll
 	makensis -V3 springinstaller.nsi
 
-test: springinstaller.exe
-	cp springinstaller.exe test.exe
-	echo "SPRING:https://github.com/spring/springinstaller/raw/master/repo/springinstaller.ini" >>test.exe
-	wine test.exe
+spring-setup.exe: springinstaller.exe
+	cp springinstaller.exe spring-setup.exe
+	echo "SPRING:https://github.com/spring/springinstaller/raw/master/repo/springinstaller.ini" >>spring-setup.exe
 
-release: springinstaller.exe
+release: springinstaller.exe spring-setup.exe
 	mkdir -p springinstaller
 	cp springinstaller.exe springinstaller
 	rm -f springinstaller.7z

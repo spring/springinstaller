@@ -161,7 +161,7 @@ Function FatalError
 	Pop $0
 	DetailPrint $0
 	MessageBox MB_YESNO "Error occured: $0, would you like to open the help forum?" IDNO noshow
-	ExecShell "open" "http://springrts.com/phpbb/viewtopic.php?f=14&t=24724"
+	ExecShell "open" "http://springrts.com/phpbb/viewtopic.php?f=14&t=25381"
 	noshow:
 	Abort
 FunctionEnd
