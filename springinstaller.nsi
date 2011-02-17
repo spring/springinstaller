@@ -271,6 +271,10 @@ Function fetchFile
 		ExecWait '"$EXEC" $EXEC_PARAMS'
 	${EndIf}
 
+	${If} $DIRECTORY != ""
+		CreateDirectory "$INSTDIR\$DIRECTORY"
+		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
+	${EndIf}
 	${If} $SHORTCUT != ""
 		!insertmacro escapeVar $SHORTCUT
 		!insertmacro escapeVar $SHORTCUT_TARGET
@@ -280,12 +284,8 @@ Function fetchFile
 		${If} $SHORTCUT_DIRECTORY == ""
 			StrCpy $SHORTCUT_DIRECTORY $GAMENAME
 		${EndIf}
-		CreateDirectory "$SMPROGRAMS\$SHORTCUT_DIRECTORY"
-		CreateShortCut "$SMPROGRAMS\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
-	${EndIf}
-	${If} $DIRECTORY != ""
-		CreateDirectory "$INSTDIR\$DIRECTORY"
-		CopyFiles "$SOURCEDIR\$FILENAME" "$INSTDIR\$DIRECTORY"
+		CreateDirectory "$SMPROGRAMS\Spring\$SHORTCUT_DIRECTORY"
+		CreateShortCut "$SMPROGRAMS\Spring\$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
 	${EndIf}
 	${If} $INCLUDE == "yes"
 		Push $SPRING_INI ; save var on stack
