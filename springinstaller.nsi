@@ -264,11 +264,14 @@ Function fetchFile
 	; run program if requested
 	${If} $EXEC != ""
 		!insertmacro escapeVar $EXEC
-		${If} $EXEC_PARAMS != ""
-			!insertmacro escapeVar $EXEC_PARAMS
-		${EndIf}
+		!insertmacro escapeVar $EXEC_PARAMS
 		DetailPrint "$EXEC $EXEC_PARAMS"
+		ClearErrors
 		ExecWait '"$EXEC" $EXEC_PARAMS'
+		${If} ${Errors}
+			Push "Couldn't run $EXEC $EXEC_PARAMS'"
+			Call FatalError
+		${EndIf}
 	${EndIf}
 
 	${If} $DIRECTORY != ""
@@ -283,7 +286,7 @@ Function fetchFile
 		!insertmacro escapeVar $SHORTCUT_DIRECTORY
 		StrCpy "$SHORTCUT_DIRECTORY" "$SMPROGRAMS\$GAMENAME\$SHORTCUT_DIRECTORY" ; use same prefix for all shortcuts
 
-		CreateDirectory "$SHORTCUT_DIRECTORY"
+		CreateDirectory $SHORTCUT_DIRECTORY
 		CreateShortCut "$SHORTCUT_DIRECTORY\$SHORTCUT" $SHORTCUT_TARGET $SHORTCUT_PARAMETER $SHORTCUT_ICON
 	${EndIf}
 	${If} $INCLUDE == "yes"
