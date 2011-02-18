@@ -184,8 +184,7 @@ FunctionEnd
 ; downloads a file, uses + _modifies_ global vars
 ; top on stack contains section name
 Function fetchFile
-	Push $0
-	Exch
+	System::Store "s"
 	Pop $0 ; Section name, for example File0
 	DetailPrint "Section $SPRING_INI:$0"
 	ReadINIStr $SECTION $SPRING_INI $0 "section"
@@ -315,8 +314,7 @@ Function fetchFile
 	${EndIf}
 
 	nofetch:
-	Pop $0
-
+	System::Store "l"
 FunctionEnd
 
 ; called on installation end (when selected)
