@@ -173,12 +173,14 @@ VAR /GLOBAL ALWAYSUPDATE ; always redownload file
 
 
 Function FatalError
+	System::Store "s"
 	Pop $0
 	DetailPrint $0
 	MessageBox MB_YESNO "Error occured: $0, would you like to open the help forum?" IDNO noshow
 	ExecShell "open" "http://springrts.com/phpbb/viewtopic.php?f=14&t=25381"
 	noshow:
 	Abort
+	System::Store "l"
 FunctionEnd
 
 ; downloads a file, uses + _modifies_ global vars
