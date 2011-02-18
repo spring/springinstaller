@@ -1,6 +1,6 @@
 
 springinstaller.exe: springinstaller.nsi plugins/*.dll include/*.nsh
-	makensis -V3 springinstaller.nsi
+	makensis -V3 -DVERSION=$(git describe) springinstaller.nsi
 
 spring-setup.exe: springinstaller.exe
 	cp springinstaller.exe spring-setup.exe
