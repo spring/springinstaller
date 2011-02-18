@@ -7,13 +7,6 @@ SetCompressor /SOLID /FINAL lzma
 
 !addplugindir "plugins"
 
-!ifdef VERSION
-	VIAddVersionKey "ProductName" "Spring online installer ${VERSION}"
-	VIAddVersionKey "FileDescription" "Online installer for http://springrts.com"
-	Name "Spring online installer ${VERSION}"
-	VIProductVersion ${VERSION}
-!endif
-
 !include "MUI2.nsh"
 ; http://nsis.sourceforge.net/Docs/Modern%20UI%202/Readme.html
 ; Config for Modern Interface
