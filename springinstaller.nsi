@@ -39,6 +39,18 @@ SetCompressor /SOLID /FINAL lzma
 
 !insertmacro MUI_LANGUAGE "English"
 
+!macro PathCanonicalize RELATIVEPATH
+	Push ${RELATIVEPATH}
+	System::Call "Shlwapi::PathCanonicalize(t, t) i (.s, s)"
+	Pop ${RELATIVEPATH}
+!macroend
+
+!macro createTempDir returnvar basepath
+	GetTempFileName ${returnvar} ${basepath}
+	Delete ${returnvar}
+	CreateDirectory ${returnvar}
+!macroend
+
 !include "LogicLib.nsh"
 !include "include/strrep.nsi"
 !include "include/StrLoc.nsi"
@@ -128,6 +140,7 @@ VAR /GLOBAL EXEC_EXIT ; to be run on exit (optional)
 VAR /GLOBAL EXEC_EXIT_PARAMETER ; to be run on exit (optional)
 VAR /GLOBAL SIZE ; size of installed files
 VAR /GLOBAL UPDATEURL ; url of this file
+VAR /GLOBAL TEMPDIR ; tempdir
 
 ; temp vars
 VAR /GLOBAL MIRROR_COUNT ; count of mirrors of current file
@@ -245,15 +258,15 @@ Function fetchFile
 	${EndIf}
 ;TODO: add extracted files to uninstall log
 	; extract file if requested
+
 	${If} $7ZIP_EXTRACT_PATH != ""
-		${SetOutPath} "$INSTDIR\$7ZIP_EXTRACT_PATH"
-		DetailPrint "Extracting $FILENAME to $INSTDIR$7ZIP_EXTRACT_PATH"
-		Nsis7z::Extract "$SOURCEDIR\$FILENAME"
-		${SetOutPath} $INSTDIR
+		${CreateDirectory} "$INSTDIR\$7ZIP_EXTRACT_PATH"
+		!insertmacro un7zip "$SOURCEDIR\$FILENAME" "$INSTDIR\$7ZIP_EXTRACT_PATH" "$TEMPDIR"
 	${EndIf}
 
 	${If} $ZIP_EXTRACT_PATH != ""
-		!insertmacro unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH"
+		${CreateDirectory} "$INSTDIR\$ZIP_EXTRACT_PATH"
+		!insertmacro unzip "$SOURCEDIR\$FILENAME" "$INSTDIR\$ZIP_EXTRACT_PATH" "$TEMPDIR"
 	${EndIf}
 
 	${If} $DIRECTORY != ""
@@ -328,6 +341,10 @@ Section "-Install" SEC_INSTALL
 	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "DisplayName" "${APP_NAME}"
 	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	${WriteRegStr} "${APP_REG_ROOT}" "${APP_REG_UNINSTALL}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+
+	!insertmacro createTempDir $TEMPDIR $INSTDIR
+	
+
 	DetailPrint "Files: $FILES"
 	StrCpy $0 1
 	${While} $0 <= $FILES
@@ -336,6 +353,7 @@ Section "-Install" SEC_INSTALL
 		IntOp $0 $0 + 1
 	${EndWhile}
 	writeUninstaller "$INSTDIR\uninstall.exe"
+	RMDIR $TEMPDIR
 SectionEnd
 
 ;reads sizes from .ini and sets it to sections

@@ -32,8 +32,9 @@
  
 ;CreateDirectory macro
   !macro CreateDirectory Path
-    CreateDirectory "${Path}"
+    IfFileExists "${Path}" +2
     FileWrite $UninstLog "${Path}$\r$\n"
+    CreateDirectory "${Path}"
   !macroend
  
 ;SetOutPath macro
