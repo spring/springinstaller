@@ -231,7 +231,7 @@ Function fetchFile
 		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME" ; skip download if file is already there
 		${OrIf} $ALWAYSUPDATE == "yes" 
 			DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
-			inetc::get $MIRROR "$SOURCEDIR\$FILENAME" /END
+			inetc::get /RESUME $MIRROR "$SOURCEDIR\$FILENAME" /END
 			Pop $R0
 			${If} $R0 != "OK"
 				Rename $SPRING_INI "$SPRING_INI.invalid"
