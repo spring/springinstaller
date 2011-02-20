@@ -4,4 +4,4 @@
  * redownload file if md5 is wrong
  * disallow .. in paths
  * always download included .ini files + add "offline-mode" switch? (or force download?)
-
+ * check if file to install already exists on destination + md5 is ok, if so, don't download it
