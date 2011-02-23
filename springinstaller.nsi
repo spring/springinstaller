@@ -52,11 +52,11 @@ SetCompressor /SOLID /FINAL lzma
 !macroend
 
 !include "LogicLib.nsh"
-!include "include/strrep.nsi"
-!include "include/StrLoc.nsi"
-!include "include/ReadCustomerData.nsi"
-!include "include/UninstallLog.nsh"
-!include "include/unpack.nsh"
+!include "include\strrep.nsi"
+!include "include\StrLoc.nsi"
+!include "include\ReadCustomerData.nsi"
+!include "include\UninstallLog.nsh"
+!include "include\unpack.nsh"
 
 
 Outfile "springinstaller.exe"
@@ -231,7 +231,7 @@ Function fetchFile
 		${IfNot} ${FileExists} "$SOURCEDIR\$FILENAME" ; skip download if file is already there
 		${OrIf} $ALWAYSUPDATE == "yes" 
 			DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
-			inetc::get /RESUME $MIRROR "$SOURCEDIR\$FILENAME" /END
+			inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $MIRROR "$SOURCEDIR\$FILENAME" /END
 			Pop $R0
 			${If} $R0 != "OK"
 				Rename $SPRING_INI "$SPRING_INI.invalid"
@@ -403,7 +403,7 @@ Function .onInit
 		${EndIf}
 
 		${If} $UPDATEURL != ""
-			inetc::get $UPDATEURL $SPRING_INI /END
+			inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $UPDATEURL $SPRING_INI /END
 			Pop $1
 			${If} $1 != "ok"
 				Push "Downloading $UPDATEURL failed."
