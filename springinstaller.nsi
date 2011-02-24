@@ -28,6 +28,7 @@ SetCompressor /SOLID /FINAL lzma
 ;!define MUI_WELCOMEPAGE_TITLE "Hey"
 ;!define MUI_WELCOMEPAGE_TITLE_3LINES ""
 ;!define MUI_WELCOMEPAGE_TEXT "blabla"
+!define INETC_GET_RESULTOK "OK"
 
 !define SPRING_MAIN_SECTION "Spring"
 
@@ -233,7 +234,7 @@ Function fetchFile
 			DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
 			inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $MIRROR "$SOURCEDIR\$FILENAME" /END
 			Pop $R0
-			${If} $R0 != "OK"
+			${If} $R0 != INETC_GET_RESULTOK
 				Rename $SPRING_INI "$SPRING_INI.invalid"
 				Push "Download failed $R0"
 				Call FatalError
@@ -407,11 +408,11 @@ Function .onInit
 				retrydownload:
 				inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $UPDATEURL $SPRING_INI /END
 				Pop $1
-				${If} $1 != "ok"
+				${If} $1 != INETC_GET_RESULTOK
 					MessageBox MB_YESNO "Downloading $UPDATEURL failed, try again?" IDYES retrydownload
 					Abort
 				${EndIf}
-			${LoopUntil} $1 == "ok"
+			${LoopUntil} $1 == INETC_GET_RESULTOK
 		${Else}
 			Push "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH"
 			Call FatalError
