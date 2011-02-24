@@ -403,14 +403,18 @@ Function .onInit
 		${EndIf}
 
 		${If} $UPDATEURL != ""
-			inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $UPDATEURL $SPRING_INI /END
-			Pop $1
-			${If} $1 != "ok"
-				Push "Downloading $UPDATEURL failed."
-				Call FatalError
-			${EndIf}
+			${Do}
+				retrydownload:
+				inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $UPDATEURL $SPRING_INI /END
+				Pop $1
+				${If} $1 != "ok"
+					MessageBox MB_YESNO "Downloading $UPDATEURL failed, try again?" IDYES retrydownload
+					Abort
+				${EndIf}
+			${LoopUntil} $1 == "ok"
 		${Else}
-			MessageBox MB_OK "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH" /SD IDOK
+			Push "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH"
+			Call FatalError
 		${EndIf}
 	${EndIf}
 
