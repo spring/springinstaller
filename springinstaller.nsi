@@ -234,7 +234,7 @@ Function fetchFile
 			DetailPrint "Downloading $MIRROR to $SOURCEDIR\$FILENAME"
 			inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $MIRROR "$SOURCEDIR\$FILENAME" /END
 			Pop $R0
-			${If} $R0 != INETC_GET_RESULTOK
+			${If} $R0 != ${INETC_GET_RESULTOK}
 				Rename $SPRING_INI "$SPRING_INI.invalid"
 				Push "Download failed $R0"
 				Call FatalError
@@ -408,11 +408,11 @@ Function .onInit
 				retrydownload:
 				inetc::get /RESUME "Your internet connection seems to have dropped out!\nPlease reconnect and click Retry to resume downloading..." $UPDATEURL $SPRING_INI /END
 				Pop $1
-				${If} $1 != INETC_GET_RESULTOK
-					MessageBox MB_YESNO "Downloading $UPDATEURL failed, try again?" IDYES retrydownload
+				${If} $1 != ${INETC_GET_RESULTOK}
+					MessageBox MB_YESNO "Downloading $UPDATEURL failed, try again? $1" IDYES retrydownload
 					Abort
 				${EndIf}
-			${LoopUntil} $1 == INETC_GET_RESULTOK
+			${LoopUntil} $1 == ${INETC_GET_RESULTOK}
 		${Else}
 			Push "Config file not updated: couldn't extract url of config file from please attach with $\necho SPRING:http://path/to/ini$\n>>$EXEPATH"
 			Call FatalError
