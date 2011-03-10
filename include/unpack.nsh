@@ -5,7 +5,7 @@
 	Call logMove
 !macroend
 
-Function logMove ; $source $destinat
+Function logMove ; $source $destination
 	System::Store "s"
 	Pop $1 ; destination
 	Pop $0 ; source
@@ -43,6 +43,18 @@ Function logMove ; $source $destinat
 	System::Store "l"
 FunctionEnd
 
+; checks if file source\version exists and appends to dest path
+!macro addVersionToPath source dest handle buf
+	${If} ${FileExists} "${source}\VERSION"
+		FileOpen ${handle} "${source}\VERSION" r
+		FileRead ${handle} ${buf}
+		FileClose ${handle}
+		StrCpy ${dest} "${dest}\${buf}"
+		${CreateDirectory} ${dest}
+	${EndIf}
+!macroend
+
+
 !macro unzip source destination tempdir
 	Push "${tempdir}"
 	Push "${destination}"
@@ -65,6 +77,7 @@ Function unzip
 		Push "Unzipping error $0 $1"
 		Call FatalError
 	${EndIf}
+	!insertmacro addVersionToPath $2 $1 $R0 $R1
 	!insertmacro logMove $2 $1
 	System::Store "l"
 FunctionEnd
@@ -80,6 +93,7 @@ Function un7zip
 	Pop $0 ; source
 	Pop $1 ; destination
 	Pop $2 ; $2 tempdir
+
 	${If} $0 == ""
 	${OrIf} $1 == ""
 		MessageBox MB_OK "$0 $1"
@@ -88,6 +102,7 @@ Function un7zip
 	DetailPrint "Extracting $0 to $1"
 	Nsis7z::Extract "$0"
 	${SetOutPath} $INSTDIR
+	!insertmacro addVersionToPath $2 $1 $R0 $R1
 	!insertmacro logMove $2 $1
 	System::Store "l"
 FunctionEnd
