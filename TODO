@@ -1,3 +1,4 @@
+ * add registry support 
  * move blocks into functions
  * add custom image
  * make use of mirror links when download fails + rsync files to sourceforge.net?
