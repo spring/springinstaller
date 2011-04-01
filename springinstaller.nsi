@@ -192,7 +192,7 @@ Function fetchFile
 	DetailPrint "Section $SPRING_INI:$0"
 	ReadINIStr $SECTION $SPRING_INI $0 "section"
 	${If} $SECTION >= 0
-	${AndIf} $Section <= 10
+	${AndIf} $Section <= 15
 		IntOp $SECTION ${SEC_0} + $SECTION
                 SectionGetFlags $SECTION $1 ; get current flags
                 IntOp $1 $1 & ${SF_SELECTED}
