@@ -40,11 +40,6 @@ SetCompressor /SOLID /FINAL lzma
 
 !insertmacro MUI_LANGUAGE "English"
 
-!macro PathCanonicalize RELATIVEPATH
-	Push ${RELATIVEPATH}
-	System::Call "Shlwapi::PathCanonicalize(t, t) i (.s, s)"
-	Pop ${RELATIVEPATH}
-!macroend
 
 !macro createTempDir returnvar basepath
 	GetTempFileName ${returnvar} ${basepath}
